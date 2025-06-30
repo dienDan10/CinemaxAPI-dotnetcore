@@ -48,6 +48,46 @@ namespace CinemaxAPI.Controllers
             return Ok(new { Message = "Roles created successfully" });
         }
 
+        [HttpPost("register-manager")]
+        public async Task<IActionResult> RegisterManager([FromBody] RegisterRequestDTO request)
+        {
+            var newUser = new ApplicationUser
+            {
+                UserName = request.Email,
+                Email = request.Email,
+                DisplayName = request.Username
+            };
+
+            // save user
+            var createUserResult = await _userManager.CreateAsync(newUser, request.Password);
+            if (!createUserResult.Succeeded)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "User creation failed",
+                    Errors = string.Join(", ", createUserResult.Errors.Select(e => e.Description)),
+                    StatusCode = 400,
+                    Status = "Error"
+                });
+            }
+
+            // assign manager role
+            await _userManager.AddToRoleAsync(newUser, Constants.Role_Manager);
+            await _userManager.AddToRoleAsync(newUser, Constants.Role_Employee);
+            await _userManager.AddToRoleAsync(newUser, Constants.Role_Customer);
+
+
+            // send email confirmation link
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+            await _userManager.ConfirmEmailAsync(newUser, token);
+
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Manager registered successfully!",
+                Data = newUser.Id,
+            });
+        }
+
         // this api is for customer to register
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)

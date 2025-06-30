@@ -1,6 +1,8 @@
 using CinemaxAPI.Data;
 using CinemaxAPI.Middlewares;
 using CinemaxAPI.Models.Domain;
+using CinemaxAPI.Repositories;
+using CinemaxAPI.Repositories.Impl;
 using CinemaxAPI.Services;
 using CinemaxAPI.Services.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,7 +18,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClientWebsite", policy =>
     {
-        policy.WithOrigins(builder.Configuration["CinemaxClients:Website"])
+        policy.WithOrigins(builder.Configuration["CinemaxClients:Website"] ?? "http://localhost:3001")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -36,6 +38,7 @@ Configuration.Default.ApiKey.Add("api-key", builder.Configuration["BrevoApi:ApiK
 // declare dependency injections
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // add db context
 builder.Services.AddDbContext<CinemaxServerDbContext>(options =>
@@ -71,7 +74,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JWT:Issuer"],
         ValidAudience = builder.Configuration["JWT:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"] ?? "default_secret_key")),
     };
 });
 
