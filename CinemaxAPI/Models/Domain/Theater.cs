@@ -10,17 +10,17 @@ namespace CinemaxAPI.Models.Domain
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; }
 
         [Required]
-        public string Address { get; set; } = string.Empty;
+        public string Address { get; set; }
 
         [Required]
-        public string Phone { get; set; } = string.Empty;
+        public string Phone { get; set; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; } = string.Empty;
+        public string Email { get; set; }
 
         public TimeOnly? OpeningTime { get; set; }
 
@@ -39,14 +39,14 @@ namespace CinemaxAPI.Models.Domain
         [ForeignKey("ProvinceId")]
         [ValidateNever]
         public Province? Province { get; set; }
-        
+
         // One theater has one manager
         public string? ManagerId { get; set; }
-        
+
         [ForeignKey("ManagerId")]
         [ValidateNever]
         public ApplicationUser? Manager { get; set; }
-        
+
         // One theater can have many employees
         [ValidateNever]
         public ICollection<ApplicationUser>? Employees { get; set; }

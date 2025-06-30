@@ -1,5 +1,6 @@
 ﻿using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Models.DTO;
+using CinemaxAPI.Models.DTO.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
