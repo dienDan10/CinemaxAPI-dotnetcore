@@ -1,5 +1,6 @@
 using CinemaxAPI.Data;
 using CinemaxAPI.Middlewares;
+using CinemaxAPI.Migrations;
 using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Repositories;
 using CinemaxAPI.Repositories.Impl;
@@ -8,6 +9,7 @@ using CinemaxAPI.Services.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using sib_api_v3_sdk.Client;
 
@@ -31,6 +33,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 
 // configure Brevo API client
 Configuration.Default.ApiKey.Add("api-key", builder.Configuration["BrevoApi:ApiKey"]);
@@ -39,6 +42,9 @@ Configuration.Default.ApiKey.Add("api-key", builder.Configuration["BrevoApi:ApiK
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// add AutoMapper
+builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 // add db context
 builder.Services.AddDbContext<CinemaxServerDbContext>(options =>
@@ -92,6 +98,13 @@ app.UseHttpsRedirection();
 app.UseCors("AllowClientWebsite");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// serving static files
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Images")),
+    RequestPath = "/Images"
+});
 
 
 app.MapControllers();

@@ -1,4 +1,4 @@
-﻿namespace CinemaxAPI.Models.DTO
+﻿namespace CinemaxAPI.Models.DTO.Responses
 {
     public class ErrorResponseDTO
     {

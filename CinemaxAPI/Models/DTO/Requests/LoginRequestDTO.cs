@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CinemaxAPI.Models.DTO
+namespace CinemaxAPI.Models.DTO.Requests
 {
     public class LoginRequestDTO
     {

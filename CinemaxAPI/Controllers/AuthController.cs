@@ -1,5 +1,7 @@
 ﻿using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Models.DTO;
+using CinemaxAPI.Models.DTO.Requests;
+using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Services;
 using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Identity;
