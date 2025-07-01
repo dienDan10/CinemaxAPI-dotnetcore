@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaxAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/accounts")]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -50,6 +50,8 @@ namespace CinemaxAPI.Controllers
             {
                 Data = userDtos,
                 Message = "Customers retrieved successfully.",
+                Status = "success",
+                StatusCode = 200,
             });
         }
 

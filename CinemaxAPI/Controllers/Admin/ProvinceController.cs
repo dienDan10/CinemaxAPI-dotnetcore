@@ -32,7 +32,7 @@ namespace CinemaxAPI.Controllers.Admin
                 province.TheaterCount = await _unitOfWork.Theater.CountByProvinceId(province.Id);
             }
 
-            return Ok(new
+            return Ok(new SuccessResponseDTO
             {
                 Data = provinces,
                 Message = "Provinces retrieved successfully."
@@ -56,7 +56,7 @@ namespace CinemaxAPI.Controllers.Admin
             var provinceDto = _mapper.Map<ProvinceDTO>(province);
             provinceDto.TheaterCount = await _unitOfWork.Theater.CountByProvinceId(province.Id);
 
-            return Ok(new
+            return Ok(new SuccessResponseDTO
             {
                 Data = provinceDto,
                 Message = "Province retrieved successfully."
@@ -75,7 +75,7 @@ namespace CinemaxAPI.Controllers.Admin
             await _unitOfWork.Province.AddAsync(province);
             await _unitOfWork.SaveAsync();
 
-            return CreatedAtAction(nameof(GetProvinceById), new { id = province.Id }, new
+            return CreatedAtAction(nameof(GetProvinceById), new { id = province.Id }, new SuccessResponseDTO
             {
                 Data = _mapper.Map<ProvinceDTO>(province),
                 Message = "Province created successfully."
@@ -101,7 +101,7 @@ namespace CinemaxAPI.Controllers.Admin
             _unitOfWork.Province.Update(province);
             await _unitOfWork.SaveAsync();
 
-            return Ok(new
+            return Ok(new SuccessResponseDTO
             {
                 Data = _mapper.Map<ProvinceDTO>(province),
                 Message = "Province updated successfully."
@@ -125,7 +125,7 @@ namespace CinemaxAPI.Controllers.Admin
             _unitOfWork.Province.Remove(province);
             await _unitOfWork.SaveAsync();
 
-            return Ok(new
+            return Ok(new SuccessResponseDTO
             {
                 Message = "Province deleted successfully."
             });

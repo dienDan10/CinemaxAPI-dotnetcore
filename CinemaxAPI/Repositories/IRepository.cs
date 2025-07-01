@@ -6,7 +6,7 @@ namespace CinemaxAPI.Repositories
     {
         Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null);
         Task<T?> GetByIdAsync(Guid id);
-        Task<T?> GetOneAsync(Expression<Func<T, bool>> filter, string? includeProperties = null);
+        Task<T?> GetOneAsync(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false);
         Task<T?> AddAsync(T entity);
         Task AddRangeAsync(IEnumerable<T> entities);
         void Update(T entity);

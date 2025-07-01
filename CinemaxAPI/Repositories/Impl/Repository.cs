@@ -53,9 +53,6 @@ namespace CinemaxAPI.Repositories.Impl
         {
             IQueryable<T> query = dbSet;
 
-            if (tracked == false)
-                query = query.AsNoTracking();
-
             if (!string.IsNullOrEmpty(includeProperties))
             {
                 foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries))
@@ -65,11 +62,6 @@ namespace CinemaxAPI.Repositories.Impl
             }
 
             return await query.FirstOrDefaultAsync(filter);
-        }
-
-        public Task<T?> GetOneAsync(Expression<Func<T, bool>> filter, string? includeProperties = null)
-        {
-            throw new NotImplementedException();
         }
 
         public void Remove(T entity)
