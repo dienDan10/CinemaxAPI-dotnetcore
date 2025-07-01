@@ -100,11 +100,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // serving static files
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Images")),
-    RequestPath = "/Images"
-});
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Images")),
+//    RequestPath = "/Images"
+//});
 
 
 app.MapControllers();
