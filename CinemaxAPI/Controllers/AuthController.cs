@@ -15,15 +15,17 @@ namespace CinemaxAPI.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
         private readonly IEmailService _emailService;
 
-        public AuthController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ITokenService tokenService, IEmailService emailService)
+        public AuthController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ITokenService tokenService, IEmailService emailService, SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
             _emailService = emailService;
+            _signInManager = signInManager;
         }
 
         [HttpGet("create-roles")]
@@ -50,7 +52,7 @@ namespace CinemaxAPI.Controllers
             return Ok(new { Message = "Roles created successfully" });
         }
 
-        [HttpGet("register-admin")]
+        [HttpPost("register-admin")]
         public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequestDTO request)
         {
             var newUser = new ApplicationUser
@@ -255,6 +257,17 @@ namespace CinemaxAPI.Controllers
                 });
             }
 
+            // check if user is locked out
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "User account is locked",
+                    StatusCode = 403,
+                    Status = "Error"
+                });
+            }
+
             // Generate JWT token here
             var roles = await _userManager.GetRolesAsync(user);
             var token = _tokenService.CreateJwtToken(user, roles.ToList());
@@ -264,7 +277,7 @@ namespace CinemaxAPI.Controllers
                 Id = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
-                Role = roles.ToArray()
+                Role = roles.FirstOrDefault() ?? Constants.Role_Customer,
             };
 
 

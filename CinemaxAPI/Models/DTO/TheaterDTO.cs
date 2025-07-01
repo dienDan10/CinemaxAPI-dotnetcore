@@ -1,4 +1,6 @@
-﻿namespace CinemaxAPI.Models.DTO
+﻿using CinemaxAPI.Models.Domain;
+
+namespace CinemaxAPI.Models.DTO
 {
     public class TheaterDTO
     {
@@ -14,7 +16,7 @@
 
         public bool IsActive { get; set; }
 
-        public string Province { get; set; }
+        public Province Province { get; set; }
 
     }
 }
