@@ -5,12 +5,15 @@ using CinemaxAPI.Models.DTO;
 using CinemaxAPI.Models.DTO.Requests;
 using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Repositories;
+using CinemaxAPI.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaxAPI.Controllers.Admin
 {
     [Route("api/theaters")]
     [ApiController]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
     public class TheaterController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

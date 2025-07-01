@@ -19,18 +19,6 @@ namespace CinemaxAPI.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return Ok(new SuccessResponseDTO
-            {
-                Message = "User controller is working",
-                StatusCode = 200,
-                Status = "Success"
-            });
-        }
-
-
         [HttpGet("profile")]
         [Authorize]
         public async Task<IActionResult> GetUserProfile()
@@ -64,7 +52,7 @@ namespace CinemaxAPI.Controllers
                 Id = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
-                Role = (await _userManager.GetRolesAsync(user)).ToArray()
+                Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault(),
             };
 
             return Ok(new SuccessResponseDTO
