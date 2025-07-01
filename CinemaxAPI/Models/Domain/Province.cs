@@ -11,8 +11,5 @@ namespace CinemaxAPI.Models.Domain
         [Required]
         [Column(TypeName = "nvarchar(100)")]
         public string Name { get; set; }
-
-        [NotMapped]
-        public int TheaterCount { get; set; }
     }
 }

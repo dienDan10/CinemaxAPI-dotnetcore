@@ -22,8 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Controllers\Customer\" />
+    <Folder Include="Controllers\Employee\" />
     <Folder Include="Images\" />
-    <Folder Include="Mappings\" />
   </ItemGroup>
 
 </Project>

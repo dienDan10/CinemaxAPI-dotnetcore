@@ -1,5 +1,4 @@
 ﻿using CinemaxAPI.Data;
-using CinemaxAPI.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -16,17 +15,18 @@ namespace CinemaxAPI.Repositories.Impl
             dbSet = _context.Set<T>();
         }
 
-        public void Add(T entity)
+        public async Task<T?> AddAsync(T entity)
         {
-            dbSet.Add(entity);
+            await dbSet.AddAsync(entity);
+            return entity;
         }
 
-        public void AddRange(IEnumerable<T> entities)
+        public async Task AddRangeAsync(IEnumerable<T> entities)
         {
-            dbSet.AddRange(entities);
+            await dbSet.AddRangeAsync(entities);
         }
 
-        public IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
             if (filter != null)
@@ -41,10 +41,15 @@ namespace CinemaxAPI.Repositories.Impl
                     query = query.Include(includeProperty);
                 }
             }
-            return query.ToList();
+            return await query.ToListAsync();
         }
 
-        public T GetOne(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false)
+        public async Task<T?> GetByIdAsync(Guid id)
+        {
+            return await dbSet.FindAsync(id);
+        }
+
+        public async Task<T?> GetOneAsync(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false)
         {
             IQueryable<T> query = dbSet;
 
@@ -59,7 +64,12 @@ namespace CinemaxAPI.Repositories.Impl
                 }
             }
 
-            return query.FirstOrDefault(filter);
+            return await query.FirstOrDefaultAsync(filter);
+        }
+
+        public Task<T?> GetOneAsync(Expression<Func<T, bool>> filter, string? includeProperties = null)
+        {
+            throw new NotImplementedException();
         }
 
         public void Remove(T entity)

@@ -1,5 +1,4 @@
 ﻿using CinemaxAPI.Data;
-using CinemaxAPI.Repositories;
 
 namespace CinemaxAPI.Repositories.Impl
 {
@@ -39,9 +38,9 @@ namespace CinemaxAPI.Repositories.Impl
             ApplicationUser = new ApplicationUserRepository(_db);
         }
 
-        public void Save()
+        public async Task SaveAsync()
         {
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
     }
 }

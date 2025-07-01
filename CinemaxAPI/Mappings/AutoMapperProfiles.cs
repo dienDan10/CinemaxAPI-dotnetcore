@@ -2,7 +2,7 @@
 using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Models.DTO;
 
-namespace CinemaxAPI.Migrations
+namespace CinemaxAPI.Mappings
 {
     public class AutoMapperProfiles : Profile
     {
@@ -13,6 +13,8 @@ namespace CinemaxAPI.Migrations
             CreateMap<ApplicationUser, UserDTO>()
                 .ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTime.UtcNow))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber ?? string.Empty));
+
+            CreateMap<Province, ProvinceDTO>();
         }
     }
 

@@ -1,6 +1,6 @@
 using CinemaxAPI.Data;
+using CinemaxAPI.Mappings;
 using CinemaxAPI.Middlewares;
-using CinemaxAPI.Migrations;
 using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Repositories;
 using CinemaxAPI.Repositories.Impl;
