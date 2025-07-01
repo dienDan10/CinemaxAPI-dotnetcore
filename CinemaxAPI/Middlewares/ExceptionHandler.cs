@@ -1,4 +1,5 @@
 ﻿using CinemaxAPI.Models.DTO;
+using CinemaxAPI.Models.DTO.Responses;
 
 namespace CinemaxAPI.Middlewares
 {
