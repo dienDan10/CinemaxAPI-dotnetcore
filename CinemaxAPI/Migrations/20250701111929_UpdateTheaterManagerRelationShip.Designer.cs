@@ -4,6 +4,7 @@ using CinemaxAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CinemaxAPI.Migrations
 {
     [DbContext(typeof(CinemaxServerDbContext))]
-    partial class CinemaxServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250701111929_UpdateTheaterManagerRelationShip")]
+    partial class UpdateTheaterManagerRelationShip
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -467,12 +470,11 @@ namespace CinemaxAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<TimeOnly?>("ClosingTime")
+                        .HasColumnType("time");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -487,6 +489,9 @@ namespace CinemaxAPI.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeOnly?>("OpeningTime")
+                        .HasColumnType("time");
 
                     b.Property<string>("Phone")
                         .IsRequired()
