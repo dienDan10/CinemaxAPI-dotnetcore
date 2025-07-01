@@ -2,7 +2,7 @@
 
 namespace CinemaxAPI.Models.DTO.Requests
 {
-    public class CreateTheaterRequestDTO
+    public class UpdateTheaterRequestDTO
     {
         [Required]
         public string Name { get; set; }

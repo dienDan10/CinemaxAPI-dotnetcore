@@ -16,6 +16,6 @@
         IPaymentRepository Payment { get; }
         IApplicationUserRepository ApplicationUser { get; }
 
-        void Save();
+        Task SaveAsync();
     }
 }

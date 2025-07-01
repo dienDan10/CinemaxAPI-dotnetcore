@@ -22,9 +22,7 @@ namespace CinemaxAPI.Models.Domain
         [EmailAddress]
         public string Email { get; set; }
 
-        public TimeOnly? OpeningTime { get; set; }
-
-        public TimeOnly? ClosingTime { get; set; }
+        public string Description { get; set; }
 
         public bool IsActive { get; set; } = true;
 
@@ -40,15 +38,5 @@ namespace CinemaxAPI.Models.Domain
         [ValidateNever]
         public Province? Province { get; set; }
 
-        // One theater has one manager
-        public string? ManagerId { get; set; }
-
-        [ForeignKey("ManagerId")]
-        [ValidateNever]
-        public ApplicationUser? Manager { get; set; }
-
-        // One theater can have many employees
-        [ValidateNever]
-        public ICollection<ApplicationUser>? Employees { get; set; }
     }
 }

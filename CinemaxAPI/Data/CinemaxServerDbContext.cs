@@ -31,20 +31,6 @@ namespace CinemaxAPI.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure Theater-Manager relationship (one-to-one)
-            modelBuilder.Entity<Theater>()
-                .HasOne(t => t.Manager)
-                .WithOne(u => u.ManagedTheater)
-                .HasForeignKey<Theater>(t => t.ManagerId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // Configure Theater-Employee relationship (one-to-many)
-            modelBuilder.Entity<ApplicationUser>()
-                .HasOne(u => u.EmployedTheater)
-                .WithMany(t => t.Employees)
-                .HasForeignKey(u => u.TheaterId)
-                .OnDelete(DeleteBehavior.SetNull);
-
             // BookingDetail relationships
             modelBuilder.Entity<BookingDetail>()
                 .HasOne(bd => bd.Seat)
