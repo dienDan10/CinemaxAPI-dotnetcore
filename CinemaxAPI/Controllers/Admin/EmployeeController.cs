@@ -12,59 +12,57 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaxAPI.Controllers.Admin
 {
-    [Route("api/managers")]
+    [Route("api/employees")]
     [ApiController]
     [Authorize(Roles = Constants.Role_Admin)]
-    public class ManagerController : ControllerBase
+    public class EmployeeController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
 
-        public ManagerController(IUnitOfWork unitOfWork, IMapper mapper, UserManager<ApplicationUser> userManager)
+        public EmployeeController(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
             _userManager = userManager;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllManagers()
+        public async Task<IActionResult> GetAllEmployees([FromQuery] EmployeeFilterRequestDTO filter, [FromQuery] SortRequestDTO sort, [FromQuery] PagedRequestDTO paged)
         {
-            var managers = await _userManager.GetUsersInRoleAsync(Constants.Role_Manager);
-            if (managers == null || !managers.Any())
+            var (employees, totalCount) = await _unitOfWork.ApplicationUser.GetAllEmployeeAsync(filter, sort, paged, includeProperties: "EmployedTheater");
+
+            if (employees == null || !employees.Any())
             {
                 return Ok(new SuccessResponseDTO
                 {
-                    Data = new List<UserDTO>(),
-                    Message = "No managers found."
+                    Data = new List<EmployeeDTO>(),
+                    Message = "No employees found."
                 });
             }
 
-            // if manager have managed theaters, include them
-            foreach (var manager in managers)
-            {
-                var managedTheater = await _unitOfWork.Theater.GetOneAsync(t => t.Id == manager.TheaterId);
-                if (managedTheater != null)
-                {
-                    manager.ManagedTheater = managedTheater;
-                }
-            }
-
-            var managerDtos = _mapper.Map<List<ManagerDTO>>(managers);
+            var employeeDtos = _mapper.Map<List<EmployeeDTO>>(employees);
 
             return Ok(new SuccessResponseDTO
             {
-                Data = managerDtos,
-                Message = "Managers retrieved successfully."
+                Data = new
+                {
+                    employees = employeeDtos,
+                    TotalCount = totalCount,
+                    TotalResult = employees.Count(),
+                    page = paged?.PageNumber > 0 ? paged.PageNumber : 1,
+                },
+                Message = "Employees retrieved successfully.",
             });
         }
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> RegisterManager([FromBody] RegisterManagerRequestDTO request)
+        public async Task<IActionResult> CreateEmployee([FromBody] RegisterEmployeeRequestDTO request)
         {
-            var newUser = new ApplicationUser
+
+            var user = new ApplicationUser
             {
                 UserName = request.Email,
                 Email = request.Email,
@@ -73,43 +71,43 @@ namespace CinemaxAPI.Controllers.Admin
                 TheaterId = request.TheaterId,
             };
 
-            // save user
-            var createUserResult = await _userManager.CreateAsync(newUser, request.Password);
-            if (!createUserResult.Succeeded)
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
             {
                 return BadRequest(new ErrorResponseDTO
                 {
-                    Message = "User creation failed",
-                    Errors = string.Join(", ", createUserResult.Errors.Select(e => e.Description)),
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
                     StatusCode = 400,
                     Status = "Error"
                 });
             }
 
-            // assign manager role
-            await _userManager.AddToRoleAsync(newUser, Constants.Role_Manager);
+            await _userManager.AddToRoleAsync(user, Constants.Role_Employee);
 
             // send email confirmation link
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-            await _userManager.ConfirmEmailAsync(newUser, token);
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            await _userManager.ConfirmEmailAsync(user, token);
 
             return Ok(new SuccessResponseDTO
             {
-                Message = "Manager registered successfully!",
-                Data = newUser.Id,
+                Message = "Employee created successfully.",
+                Data = new
+                {
+                    user.Id,
+                }
             });
         }
 
         [HttpPut("{id}")]
         [ValidateModel]
-        public async Task<IActionResult> UpdateManager(string id, [FromBody] UpdateManagerRequestDTO request)
+        public async Task<IActionResult> UpdateEmployee(string id, [FromBody] UpdateEmployeeRequestDTO request)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ErrorResponseDTO
                 {
-                    Message = "Manager not found",
+                    Message = "Employee not found",
                     StatusCode = 404,
                     Status = "Error"
                 });
@@ -125,8 +123,7 @@ namespace CinemaxAPI.Controllers.Admin
             {
                 return BadRequest(new ErrorResponseDTO
                 {
-                    Message = "Failed to update manager",
-                    Errors = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
                     StatusCode = 400,
                     Status = "Error"
                 });
@@ -134,34 +131,34 @@ namespace CinemaxAPI.Controllers.Admin
 
             return Ok(new SuccessResponseDTO
             {
-                Message = "Manager updated successfully",
-                Data = user.Id
+                Message = "Employee updated successfully.",
+                Data = user
             });
         }
 
         [HttpPut("{id}/lock")]
-        public async Task<IActionResult> LockManager(string id)
+        public async Task<IActionResult> LockEmployee(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ErrorResponseDTO
                 {
-                    Message = "Manager not found",
+                    Message = "Employee not found",
                     StatusCode = 404,
                     Status = "Error"
                 });
             }
 
-            user.LockoutEnd = DateTime.UtcNow.AddYears(100); // effectively locks the user
-            var result = await _userManager.UpdateAsync(user);
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTime.UtcNow.AddYears(100);
 
+            var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
                 return BadRequest(new ErrorResponseDTO
                 {
-                    Message = "Failed to lock manager",
-                    Errors = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
                     StatusCode = 400,
                     Status = "Error"
                 });
@@ -169,34 +166,34 @@ namespace CinemaxAPI.Controllers.Admin
 
             return Ok(new SuccessResponseDTO
             {
-                Message = "Manager locked successfully",
-                Data = user.Id
+                Message = "Employee locked successfully.",
+                Data = user
             });
         }
 
         [HttpPut("{id}/unlock")]
-        public async Task<IActionResult> UnlockManager(string id)
+        public async Task<IActionResult> UnlockEmployee(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ErrorResponseDTO
                 {
-                    Message = "Manager not found",
+                    Message = "Employee not found",
                     StatusCode = 404,
                     Status = "Error"
                 });
             }
 
-            user.LockoutEnd = null; // unlock the user
-            var result = await _userManager.UpdateAsync(user);
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTimeOffset.UtcNow;
 
+            var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
                 return BadRequest(new ErrorResponseDTO
                 {
-                    Message = "Failed to unlock manager",
-                    Errors = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
                     StatusCode = 400,
                     Status = "Error"
                 });
@@ -204,8 +201,8 @@ namespace CinemaxAPI.Controllers.Admin
 
             return Ok(new SuccessResponseDTO
             {
-                Message = "Manager unlocked successfully",
-                Data = user.Id
+                Message = "Employee unlocked successfully.",
+                Data = user
             });
         }
     }

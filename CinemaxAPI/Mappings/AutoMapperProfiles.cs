@@ -11,10 +11,15 @@ namespace CinemaxAPI.Mappings
             // Add your mapping configurations here
             // CreateMap<Source, Destination>();
             CreateMap<ApplicationUser, UserDTO>()
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.DisplayName))
                 .ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTime.UtcNow))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber ?? string.Empty));
             CreateMap<ApplicationUser, ManagerDTO>()
                 .ForMember(dest => dest.Theater, opt => opt.MapFrom(src => src.ManagedTheater))
+                .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.DisplayName))
+                .ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTime.UtcNow));
+            CreateMap<ApplicationUser, EmployeeDTO>()
+                .ForMember(dest => dest.Theater, opt => opt.MapFrom(src => src.EmployedTheater))
                 .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.DisplayName))
                 .ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTime.UtcNow));
 
