@@ -8,12 +8,14 @@ using CinemaxAPI.Repositories;
 using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
-namespace CinemaxAPI.Controllers.Admin
+namespace CinemaxAPI.Controllers.Manager
 {
     [Route("api/movies")]
     [ApiController]
-    [Authorize(Roles = Constants.Role_Admin)]
+    [Authorize(Roles = Constants.Role_Manager)]
     public class MovieController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -114,23 +116,50 @@ namespace CinemaxAPI.Controllers.Admin
             });
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMovie(int id)
+        [HttpPost("upload-poster")]
+        [RequestSizeLimit(10_000_000)] // Limit to 10MB
+        public async Task<IActionResult> UploadPoster([FromForm] IFormFile file)
         {
-            var movie = await _unitOfWork.Movie.GetOneAsync(m => m.Id == id);
-            if (movie == null)
+            if (file == null || file.Length == 0)
             {
-                return NotFound(new ErrorResponseDTO
+                return BadRequest(new ErrorResponseDTO
                 {
-                    Message = "Movie not found.",
-                    StatusCode = 404
+                    Message = "No file uploaded.",
+                    StatusCode = 400,
+                    Status = "Error"
                 });
             }
-            _unitOfWork.Movie.Remove(movie);
-            await _unitOfWork.SaveAsync();
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Images");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileExt = Path.GetExtension(file.FileName);
+            var allowedExts = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            if (!allowedExts.Contains(fileExt.ToLower()))
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Invalid file type.",
+                    StatusCode = 400,
+                    Status = "Error"
+                });
+            }
+
+            var uniqueFileName = $"poster_{Guid.NewGuid()}{fileExt}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var imageUrl = $"{baseUrl}/images/{uniqueFileName}";
+
             return Ok(new SuccessResponseDTO
             {
-                Message = "Movie deleted successfully."
+                Message = "Image uploaded successfully.",
+                Data = new { imageUrl }
             });
         }
     }
