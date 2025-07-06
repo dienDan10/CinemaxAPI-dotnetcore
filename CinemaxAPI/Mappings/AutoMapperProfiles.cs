@@ -30,6 +30,8 @@ namespace CinemaxAPI.Mappings
 
             // Movie mappings
             CreateMap<Movie, MovieDTO>().ReverseMap();
+            CreateMap<Screen, ScreenDTO>()
+                .ForMember(dest => dest.TheaterName, opt => opt.MapFrom(src => src.Theater != null ? src.Theater.Name : string.Empty));
         }
     }
 

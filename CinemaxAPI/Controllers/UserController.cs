@@ -1,6 +1,7 @@
 ﻿using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Models.DTO;
 using CinemaxAPI.Models.DTO.Responses;
+using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -47,12 +48,14 @@ namespace CinemaxAPI.Controllers
                 });
             }
 
+            var roles = await _userManager.GetRolesAsync(user);
             var userProfile = new UserProfileDTO
             {
                 Id = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
-                Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault(),
+                TheaterId = user.TheaterId,
+                Role = roles.FirstOrDefault() ?? Constants.Role_Customer,
             };
 
             return Ok(new SuccessResponseDTO

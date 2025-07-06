@@ -1,6 +1,5 @@
 ﻿using CinemaxAPI.Data;
 using CinemaxAPI.Models.Domain;
-using CinemaxAPI.Repositories;
 
 namespace CinemaxAPI.Repositories.Impl
 {
@@ -10,5 +9,7 @@ namespace CinemaxAPI.Repositories.Impl
         {
 
         }
+
+
     }
 }

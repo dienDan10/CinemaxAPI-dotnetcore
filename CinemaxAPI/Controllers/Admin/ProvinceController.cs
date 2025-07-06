@@ -12,7 +12,6 @@ namespace CinemaxAPI.Controllers.Admin
 {
     [Route("api/provinces")]
     [ApiController]
-    [Authorize(Roles = Constants.Role_Admin)]
     public class ProvinceController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -68,6 +67,7 @@ namespace CinemaxAPI.Controllers.Admin
 
         [HttpPost]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> CreateProvince([FromBody] CreateProvinceRequestDTO request)
         {
 
@@ -87,6 +87,7 @@ namespace CinemaxAPI.Controllers.Admin
 
         [HttpPut("{id}")]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> UpdateProvince(int id, [FromBody] UpdateProvinceRequestDTO request)
         {
             var province = await _unitOfWork.Province.GetOneAsync(p => p.Id == id);
@@ -112,6 +113,7 @@ namespace CinemaxAPI.Controllers.Admin
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> DeleteProvince(int id)
         {
             var province = await _unitOfWork.Province.GetOneAsync(p => p.Id == id);
@@ -121,6 +123,19 @@ namespace CinemaxAPI.Controllers.Admin
                 {
                     Message = "Province not found.",
                     StatusCode = 404,
+                    Status = "Error"
+                });
+            }
+
+            // Check if there are any theaters in this province
+            var theaterCount = await _unitOfWork.Theater.CountByProvinceId(id);
+
+            if (theaterCount > 0)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Cannot delete province with existing theaters.",
+                    StatusCode = 400,
                     Status = "Error"
                 });
             }
