@@ -277,6 +277,7 @@ namespace CinemaxAPI.Controllers
                 Id = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
+                TheaterId = user.TheaterId,
                 Role = roles.FirstOrDefault() ?? Constants.Role_Customer,
             };
 

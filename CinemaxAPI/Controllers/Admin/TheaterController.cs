@@ -13,7 +13,6 @@ namespace CinemaxAPI.Controllers.Admin
 {
     [Route("api/theaters")]
     [ApiController]
-    [Authorize(Roles = Constants.Role_Admin)]
     public class TheaterController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -69,6 +68,7 @@ namespace CinemaxAPI.Controllers.Admin
 
         [HttpPost]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> CreateTheater([FromBody] CreateTheaterRequestDTO request)
         {
             var theater = new Theater
@@ -95,6 +95,7 @@ namespace CinemaxAPI.Controllers.Admin
 
         [HttpPut("{id}")]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> UpdateTheater(int id, [FromBody] UpdateTheaterRequestDTO request)
         {
             var theater = await _unitOfWork.Theater.GetOneAsync(t => t.Id == id);
@@ -123,6 +124,35 @@ namespace CinemaxAPI.Controllers.Admin
             {
                 Data = _mapper.Map<TheaterDTO>(theater),
                 Message = "Theater updated successfully."
+            });
+        }
+
+        // enpoint for locking/unlocking theater
+        [HttpPut("{id}/lock")]
+        [Authorize(Roles = Constants.Role_Admin)]
+        public async Task<IActionResult> LockUnlockTheater(int id)
+        {
+            var theater = await _unitOfWork.Theater.GetOneAsync(t => t.Id == id);
+
+            if (theater == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Theater not found.",
+                    StatusCode = 404
+                });
+            }
+
+            theater.IsActive = !theater.IsActive;
+            theater.LastUpdatedAt = DateTime.Now;
+
+            _unitOfWork.Theater.Update(theater);
+            await _unitOfWork.SaveAsync();
+
+            return Ok(new
+            {
+                Data = _mapper.Map<TheaterDTO>(theater),
+                Message = theater.IsActive ? "Theater unlocked successfully." : "Theater locked successfully."
             });
         }
     }

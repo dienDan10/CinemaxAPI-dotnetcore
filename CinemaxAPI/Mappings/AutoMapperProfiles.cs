@@ -27,6 +27,9 @@ namespace CinemaxAPI.Mappings
 
             CreateMap<Theater, TheaterDTO>()
                 .ForMember(dest => dest.Province, opt => opt.MapFrom(src => src.Province != null ? src.Province : null));
+
+            CreateMap<Screen, ScreenDTO>()
+                .ForMember(dest => dest.TheaterName, opt => opt.MapFrom(src => src.Theater != null ? src.Theater.Name : string.Empty));
         }
     }
 

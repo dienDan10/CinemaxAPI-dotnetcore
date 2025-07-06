@@ -4,6 +4,8 @@ using CinemaxAPI.Models.DTO;
 using CinemaxAPI.Models.DTO.Requests;
 using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Repositories;
+using CinemaxAPI.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +13,7 @@ namespace CinemaxAPI.Controllers.Admin
 {
     [Route("api/customers")]
     [ApiController]
+    [Authorize(Roles = Constants.Role_Admin)]
     public class CustomerController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
