@@ -7,8 +7,8 @@ using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Repositories;
 using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.IO;
 
 namespace CinemaxAPI.Controllers.Manager
@@ -75,7 +75,6 @@ namespace CinemaxAPI.Controllers.Manager
             movie.IsActive = true;
             await _unitOfWork.Movie.AddAsync(movie);
             await _unitOfWork.SaveAsync();
-            // Only map properties present in MovieDTO
             var movieDto = _mapper.Map<MovieDTO>(movie);
             return CreatedAtAction(nameof(GetMovieById), new { id = movie.Id }, new SuccessResponseDTO
             {
@@ -97,21 +96,10 @@ namespace CinemaxAPI.Controllers.Manager
                     StatusCode = 404
                 });
             }
-            // Update fields
-            movie.Title = request.Title;
-            movie.Genre = request.Genre;
-            movie.Director = request.Director;
-            movie.Cast = request.Cast;
-            movie.Description = request.Description;
-            movie.Duration = request.Duration;
-            movie.ReleaseDate = request.ReleaseDate;
-            movie.PosterUrl = request.PosterUrl;
-            movie.TrailerUrl = request.TrailerUrl;
-            movie.IsActive = request.IsActive;
+            _mapper.Map(request, movie);
             movie.LastUpdatedAt = DateTime.Now;
             _unitOfWork.Movie.Update(movie);
             await _unitOfWork.SaveAsync();
-            // Only map properties present in MovieDTO
             var movieDto = _mapper.Map<MovieDTO>(movie);
             return Ok(new SuccessResponseDTO
             {

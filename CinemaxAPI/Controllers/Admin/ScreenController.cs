@@ -13,7 +13,7 @@ namespace CinemaxAPI.Controllers.Admin
 {
     [Route("api/screens")]
     [ApiController]
-    //[Authorize(Roles = Constants.Role_Admin)]
+    [Authorize(Roles = Constants.Role_Admin)]
     public class ScreenController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
