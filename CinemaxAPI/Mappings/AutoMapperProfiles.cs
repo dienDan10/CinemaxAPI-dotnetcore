@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CinemaxAPI.Models.Domain;
 using CinemaxAPI.Models.DTO;
+using CinemaxAPI.Models.DTO.Requests;
 
 namespace CinemaxAPI.Mappings
 {
@@ -29,7 +30,10 @@ namespace CinemaxAPI.Mappings
                 .ForMember(dest => dest.Province, opt => opt.MapFrom(src => src.Province != null ? src.Province : null));
 
             // Movie mappings
-            CreateMap<Movie, MovieDTO>().ReverseMap();
+            CreateMap<Movie, MovieDTO>();
+            CreateMap<CreateMovieRequestDTO, Movie>();
+            CreateMap<UpdateMovieRequestDTO, Movie>();
+
             CreateMap<Screen, ScreenDTO>()
                 .ForMember(dest => dest.TheaterName, opt => opt.MapFrom(src => src.Theater != null ? src.Theater.Name : string.Empty));
         }

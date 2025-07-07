@@ -75,9 +75,11 @@ namespace CinemaxAPI.Controllers.Manager
             movie.IsActive = true;
             await _unitOfWork.Movie.AddAsync(movie);
             await _unitOfWork.SaveAsync();
+            // Only map properties present in MovieDTO
+            var movieDto = _mapper.Map<MovieDTO>(movie);
             return CreatedAtAction(nameof(GetMovieById), new { id = movie.Id }, new SuccessResponseDTO
             {
-                Data = _mapper.Map<MovieDTO>(movie),
+                Data = movieDto,
                 Message = "Movie created successfully."
             });
         }
@@ -109,9 +111,11 @@ namespace CinemaxAPI.Controllers.Manager
             movie.LastUpdatedAt = DateTime.Now;
             _unitOfWork.Movie.Update(movie);
             await _unitOfWork.SaveAsync();
+            // Only map properties present in MovieDTO
+            var movieDto = _mapper.Map<MovieDTO>(movie);
             return Ok(new SuccessResponseDTO
             {
-                Data = _mapper.Map<MovieDTO>(movie),
+                Data = movieDto,
                 Message = "Movie updated successfully."
             });
         }

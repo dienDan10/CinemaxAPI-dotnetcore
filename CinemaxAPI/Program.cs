@@ -106,6 +106,12 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/images"
 });
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaxServerDbContext>();
+    CinemaxAPI.Data.MovieSeeder.SeedMovies(dbContext);
+}
+
 
 app.MapControllers();
 

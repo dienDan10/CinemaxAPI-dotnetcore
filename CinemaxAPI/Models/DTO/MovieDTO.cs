@@ -13,7 +13,5 @@ namespace CinemaxAPI.Models.DTO
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
         public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime LastUpdatedAt { get; set; }
     }
 }
