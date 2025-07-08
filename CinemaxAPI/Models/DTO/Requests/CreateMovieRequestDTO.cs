@@ -18,7 +18,7 @@ namespace CinemaxAPI.Models.DTO.Requests
         public int Duration { get; set; }
         [Required]
         public DateOnly ReleaseDate { get; set; }
-        public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
+        public IFormFile? File { get; set; }
     }
 }

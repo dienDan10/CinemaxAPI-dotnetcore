@@ -43,6 +43,7 @@ Configuration.Default.ApiKey.Add("api-key", builder.Configuration["BrevoApi:ApiK
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 // add AutoMapper
