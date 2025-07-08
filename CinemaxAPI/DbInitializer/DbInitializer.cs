@@ -57,6 +57,37 @@ namespace CinemaxAPI.DbInitializer
                 _userManager.AddToRoleAsync(user, Constants.Role_Admin).GetAwaiter().GetResult();
             }
 
+            if (!_context.Movies.Any(m => m.Title == "Inception"))
+            {
+                _context.Movies.Add(new Movie
+                {
+                    Title = "Inception",
+                    Genre = "Sci-Fi",
+                    Director = "Christopher Nolan",
+                    Cast = "Leonardo DiCaprio",
+                    Description = "A mind-bending thriller.",
+                    Duration = 148,
+                    ReleaseDate = new DateOnly(2010, 7, 16),
+                    PosterUrl = null,
+                    TrailerUrl = null
+                });
+            }
+            if (!_context.Movies.Any(m => m.Title == "Interstellar"))
+            {
+                _context.Movies.Add(new Movie
+                {
+                    Title = "Interstellar",
+                    Genre = "Sci-Fi",
+                    Director = "Christopher Nolan",
+                    Cast = "Matthew McConaughey",
+                    Description = "Journey beyond the stars.",
+                    Duration = 169,
+                    ReleaseDate = new DateOnly(2014, 11, 7),
+                    PosterUrl = null,
+                    TrailerUrl = null
+                });
+            }
+            _context.SaveChanges();
             return;
         }
     }

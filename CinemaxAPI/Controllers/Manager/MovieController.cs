@@ -14,7 +14,6 @@ namespace CinemaxAPI.Controllers.Manager
 {
     [Route("api/movies")]
     [ApiController]
-    //[Authorize(Roles = Constants.Role_Manager)]
     public class MovieController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -75,6 +74,7 @@ namespace CinemaxAPI.Controllers.Manager
 
         [HttpPost]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Manager)]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieRequestDTO request)
         {
             var newMovie = new Movie
@@ -150,6 +150,7 @@ namespace CinemaxAPI.Controllers.Manager
 
         [HttpPut("{id}")]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Manager)]
         public async Task<IActionResult> UpdateMovie(int id, [FromForm] UpdateMovieRequestDTO request)
         {
             var movie = await _unitOfWork.Movie.GetOneAsync(m => m.Id == id);
