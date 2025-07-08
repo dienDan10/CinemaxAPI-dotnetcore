@@ -1,4 +1,5 @@
 using CinemaxAPI.Data;
+using CinemaxAPI.DbInitializer;
 using CinemaxAPI.Mappings;
 using CinemaxAPI.Middlewares;
 using CinemaxAPI.Models.Domain;
@@ -42,6 +43,7 @@ Configuration.Default.ApiKey.Add("api-key", builder.Configuration["BrevoApi:ApiK
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 // add AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
@@ -106,13 +108,16 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/images"
 });
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaxServerDbContext>();
-    CinemaxAPI.Data.MovieSeeder.SeedMovies(dbContext);
-}
-
-
 app.MapControllers();
 
+SeedDatabase();
+
 app.Run();
+
+void SeedDatabase()
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        scope.ServiceProvider.GetRequiredService<IDbInitializer>().Initialize();
+    }
+}
