@@ -13,7 +13,6 @@ namespace CinemaxAPI.Controllers.Admin
 {
     [Route("api/screens")]
     [ApiController]
-    [Authorize(Roles = Constants.Role_Admin)]
     public class ScreenController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -26,6 +25,7 @@ namespace CinemaxAPI.Controllers.Admin
         }
 
         [HttpGet]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Admin}")]
         public async Task<IActionResult> GetScreensByTheaterId([FromQuery] int theaterId)
         {
             List<Screen> screens;

@@ -7,8 +7,11 @@ namespace CinemaxAPI.Mappings
 {
     public class AutoMapperProfiles : Profile
     {
+        private readonly IHttpContextAccessor httpContextAccessor;
+
         public AutoMapperProfiles()
         {
+            httpContextAccessor = new HttpContextAccessor();
             // Add your mapping configurations here
             // CreateMap<Source, Destination>();
             CreateMap<ApplicationUser, UserDTO>()
@@ -30,7 +33,8 @@ namespace CinemaxAPI.Mappings
                 .ForMember(dest => dest.Province, opt => opt.MapFrom(src => src.Province != null ? src.Province : null));
 
             // Movie mappings
-            CreateMap<Movie, MovieDTO>();
+            CreateMap<Movie, MovieDTO>()
+                .ForMember(des => des.PosterUrl, otp => otp.MapFrom(src => $"{httpContextAccessor.HttpContext.Request.Scheme}://{httpContextAccessor.HttpContext.Request.Host}/Images/{src.PosterUrl}"));
             CreateMap<CreateMovieRequestDTO, Movie>();
             CreateMap<UpdateMovieRequestDTO, Movie>();
 
@@ -39,7 +43,6 @@ namespace CinemaxAPI.Mappings
 
             // ShowTime mappings
             CreateMap<ShowTime, ShowTimeDTO>();
-            CreateMap<CreateShowTimeRequestDTO, ShowTime>();
             CreateMap<UpdateShowTimeRequestDTO, ShowTime>();
             CreateMap<Seat, SeatDTO>();
         }
