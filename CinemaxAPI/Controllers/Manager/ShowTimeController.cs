@@ -31,15 +31,28 @@ namespace CinemaxAPI.Controllers.Manager
         [HttpGet]
         public async Task<IActionResult> GetAllShowTimes(int? movieId, int? screenId, DateTime? startDate, DateTime? endDate)
         {
-            var from = startDate?.Date ?? DateTime.Today;
-            var to = endDate?.Date ?? DateTime.Today.AddDays(7);
+            IEnumerable<ShowTime> showTimes;
 
-            var showTimes = await _unitOfWork.ShowTime.GetAllAsync(
-                s =>
-                    (!movieId.HasValue || s.MovieId == movieId.Value) &&
-                    (!screenId.HasValue || s.ScreenId == screenId.Value) &&
-                    s.Date.Date >= from && s.Date.Date <= to
-            );
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                var from = startDate.Value.Date;
+                var to = endDate.Value.Date;
+                showTimes = await _unitOfWork.ShowTime.GetAllAsync(
+                    s =>
+                        (!movieId.HasValue || s.MovieId == movieId.Value) &&
+                        (!screenId.HasValue || s.ScreenId == screenId.Value) &&
+                        s.Date.Date >= from && s.Date.Date <= to
+                );
+            }
+            else
+            {
+                showTimes = await _unitOfWork.ShowTime.GetAllAsync(
+                    s =>
+                        (!movieId.HasValue || s.MovieId == movieId.Value) &&
+                        (!screenId.HasValue || s.ScreenId == screenId.Value)
+                );
+            }
+
             var ordered = showTimes.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
             return Ok(new SuccessResponseDTO
             {
@@ -133,6 +146,30 @@ namespace CinemaxAPI.Controllers.Manager
                     StatusCode = 404
                 });
             }
+
+            // Lấy các showtime khác cùng movie, screen, date (trừ chính nó)
+            var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
+                s => s.Id != id && s.MovieId == request.MovieId && s.ScreenId == request.ScreenId && s.Date.Date == request.Date.Date
+            )).OrderBy(s => s.StartTime).ToList();
+
+
+            // kiểm tra conflict showtime
+            foreach (var st in sameDayShowTimes)
+            {
+                // Nếu hai suất chiếu giao nhau trong khoảng 10 phút thì conflict
+                if (request.StartTime < st.EndTime.Add(TimeSpan.FromMinutes(10)) &&
+                    request.EndTime > st.StartTime.Add(TimeSpan.FromMinutes(-10)))
+                {
+                    return BadRequest(new ErrorResponseDTO
+                    {
+                        Message = "Showtime update conflict with another showtime.",
+                        StatusCode = 400
+                    });
+                }
+            }
+
+
+
             _mapper.Map(request, showTime);
             showTime.LastUpdatedAt = DateTime.Now;
             _unitOfWork.ShowTime.Update(showTime);
