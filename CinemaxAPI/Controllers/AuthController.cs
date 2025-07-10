@@ -6,6 +6,7 @@ using CinemaxAPI.Services;
 using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace CinemaxAPI.Controllers
 {
@@ -16,16 +17,18 @@ namespace CinemaxAPI.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
         private readonly IEmailService _emailService;
 
-        public AuthController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ITokenService tokenService, IEmailService emailService, SignInManager<ApplicationUser> signInManager)
+        public AuthController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ITokenService tokenService, IEmailService emailService, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
             _emailService = emailService;
             _signInManager = signInManager;
+            _configuration = configuration;
         }
 
         [HttpGet("create-roles")]
@@ -130,6 +133,18 @@ namespace CinemaxAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
         {
+            // check for existing user
+            var existingUser = await _userManager.FindByEmailAsync(request.Email);
+            if (existingUser != null)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Email already in use",
+                    StatusCode = 400,
+                    Status = "Error"
+                });
+            }
+
             var newUser = new ApplicationUser
             {
                 UserName = request.Email,
@@ -165,8 +180,11 @@ namespace CinemaxAPI.Controllers
 
             // send email confirmation link
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-            var confirmationLink = Url.Action(nameof(ConfirmEmail), "Auth",
-            new { userId = newUser.Id, token }, Request.Scheme);
+            var encodedToken = WebUtility.UrlEncode(token);
+            // Generate confirmation link
+            var clientUrl = _configuration["CinemaxClients:Website"];
+
+            var confirmationLink = $"{clientUrl}/confirm-email?userId={newUser.Id}&token={encodedToken}";
 
             await _emailService.SendEmailAsync(request.Email, "Confirm your email", $"Click to confirm: <a href=\"{confirmationLink}\">Confirm email</a>");
 
@@ -178,20 +196,11 @@ namespace CinemaxAPI.Controllers
             });
         }
 
-        [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequestDTO request)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
-            {
-                return BadRequest(new ErrorResponseDTO
-                {
-                    Message = "Invalid email confirmation request",
-                    StatusCode = 400,
-                    Status = "Error"
-                });
-            }
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(request.UserId);
             if (user == null)
             {
                 return NotFound(new ErrorResponseDTO
@@ -202,7 +211,7 @@ namespace CinemaxAPI.Controllers
                 });
             }
 
-            var result = await _userManager.ConfirmEmailAsync(user, token);
+            var result = await _userManager.ConfirmEmailAsync(user, request.Token);
             if (!result.Succeeded)
             {
                 return BadRequest(new ErrorResponseDTO
