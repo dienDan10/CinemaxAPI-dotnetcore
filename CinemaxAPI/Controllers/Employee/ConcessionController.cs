@@ -73,7 +73,7 @@ namespace CinemaxAPI.Controllers
 
         [HttpPost]
         [ValidateModel]
-        [Authorize(Roles = Constants.Role_Manager)]
+        //[Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> CreateConcession([FromForm] CreateConcessionRequestDTO request)
         {
             var newConcession = new Concession
@@ -123,7 +123,7 @@ namespace CinemaxAPI.Controllers
 
         [HttpPut("{id}")]
         [ValidateModel]
-        [Authorize(Roles = Constants.Role_Manager)]
+        //[Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> UpdateConcession(int id, [FromForm] UpdateConcessionRequestDTO request)
         {
             var concession = await _repo.GetByIdAsync(id);
@@ -175,7 +175,7 @@ namespace CinemaxAPI.Controllers
         }
 
         [HttpPut("{id}/disable")]
-        [Authorize(Roles = Constants.Role_Manager)]
+        //[Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> DisableConcession(int id)
         {
             var concession = await _repo.GetByIdAsync(id);
@@ -198,7 +198,7 @@ namespace CinemaxAPI.Controllers
         }
 
         [HttpPut("{id}/enable")]
-        [Authorize(Roles = Constants.Role_Manager)]
+        //[Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> EnableConcession(int id)
         {
             var concession = await _repo.GetByIdAsync(id);
@@ -221,7 +221,7 @@ namespace CinemaxAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = Constants.Role_Manager)]
+        //[Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> DeleteConcession(int id)
         {
             var result = await _repo.DeleteAsync(id);
