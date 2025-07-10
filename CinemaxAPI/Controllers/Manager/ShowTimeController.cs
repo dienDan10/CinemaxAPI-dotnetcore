@@ -33,25 +33,24 @@ namespace CinemaxAPI.Controllers.Manager
         {
             IEnumerable<ShowTime> showTimes;
 
+            DateTime from, to;
             if (startDate.HasValue && endDate.HasValue)
             {
-                var from = startDate.Value.Date;
-                var to = endDate.Value.Date;
-                showTimes = await _unitOfWork.ShowTime.GetAllAsync(
-                    s =>
-                        (!movieId.HasValue || s.MovieId == movieId.Value) &&
-                        (!screenId.HasValue || s.ScreenId == screenId.Value) &&
-                        s.Date.Date >= from && s.Date.Date <= to
-                );
+                from = startDate.Value.Date;
+                to = endDate.Value.Date;
             }
             else
             {
-                showTimes = await _unitOfWork.ShowTime.GetAllAsync(
-                    s =>
-                        (!movieId.HasValue || s.MovieId == movieId.Value) &&
-                        (!screenId.HasValue || s.ScreenId == screenId.Value)
-                );
+                from = DateTime.Today;
+                to = DateTime.Today.AddDays(7);
             }
+
+            showTimes = await _unitOfWork.ShowTime.GetAllAsync(
+                s =>
+                    (!movieId.HasValue || s.MovieId == movieId.Value) &&
+                    (!screenId.HasValue || s.ScreenId == screenId.Value) &&
+                    s.Date.Date >= from && s.Date.Date <= to
+            );
 
             var ordered = showTimes.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
             return Ok(new SuccessResponseDTO
@@ -87,19 +86,35 @@ namespace CinemaxAPI.Controllers.Manager
         {
             var results = new List<object>();
             var showTimesToAdd = new List<ShowTime>();
+            var now = DateTime.Now;
 
             foreach (var showTimeData in request.ShowTimes)
             {
+                // Nếu ngày trong quá khứ, tất cả suất chiếu đều bị từ chối
+                if (showTimeData.Date.Date < now.Date)
+                {
+                    for (int i = 0; i < showTimeData.StartTimes.Count; i++)
+                    {
+                        var startTime = TimeSpan.Parse(showTimeData.StartTimes[i]);
+                        results.Add(new { Success = false, Error = "Cannot create showtime for a past date.", Date = showTimeData.Date, StartTime = startTime });
+                    }
+                    continue;
+                }
                 for (int i = 0; i < showTimeData.StartTimes.Count; i++)
                 {
-                    // Convert start and end times from string to TimeSpan
                     var startTime = TimeSpan.Parse(showTimeData.StartTimes[i]);
                     var endTime = showTimeData.EndTimes.Count > i ? TimeSpan.Parse(showTimeData.EndTimes[i]) : startTime;
-                    // Lấy các suất chiếu cùng screen, cùng ngày
+
+                    // Nếu là ngày hôm nay thì chỉ các suất chiếu có startTime < thời điểm hiện tại mới bị từ chối
+                    if (showTimeData.Date.Date == now.Date && startTime < now.TimeOfDay)
+                    {
+                        results.Add(new { Success = false, Error = "Cannot create showtime in the past.", Date = showTimeData.Date, StartTime = startTime });
+                        continue;
+                    }
+
                     var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
                         s => s.ScreenId == request.ScreenId && s.Date.Date == showTimeData.Date.Date
                     )).OrderBy(s => s.StartTime).ToList();
-
 
                     var showTime = new ShowTime
                     {
@@ -115,7 +130,6 @@ namespace CinemaxAPI.Controllers.Manager
                     };
                     showTimesToAdd.Add(showTime);
                     results.Add(new { Success = true, ShowTime = _mapper.Map<ShowTimeDTO>(showTime) });
-
                 }
             }
 
