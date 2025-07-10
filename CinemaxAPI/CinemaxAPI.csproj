@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Customer\" />
+    <Folder Include="Controllers\Employee\" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 ﻿using CinemaxAPI.Data;
 using CinemaxAPI.Models.Domain;
-using CinemaxAPI.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace CinemaxAPI.Repositories.Impl
@@ -12,16 +11,16 @@ namespace CinemaxAPI.Repositories.Impl
 
         }
 
-        public IEnumerable<int> GetAllBookingSeatIds(int showtimeId)
+        public async Task<IEnumerable<int>> GetAllBookingSeatIds(int showtimeId)
         {
             // only get the booked seats that isActive (has been paid) or created 5 minutes recently
-            var bookedSeatIds = _context.BookingDetails
+            var bookedSeatIds = await _context.BookingDetails
                 .AsNoTracking()
-                .Where(b => b.Booking.ShowTimeId == showtimeId && (b.Booking.IsActive || b.Booking.CreatedAt.AddMinutes(5) >= DateTime.Now))
+                .Where(b => b.Booking.ShowTimeId == showtimeId)
                 .Select(b => b.SeatId)
                 .Where(seatId => seatId.HasValue)
                 .Select(seatId => seatId.Value)
-                .ToList();
+                .ToListAsync();
             return bookedSeatIds;
         }
     }

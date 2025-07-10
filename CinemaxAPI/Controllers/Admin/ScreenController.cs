@@ -57,6 +57,27 @@ namespace CinemaxAPI.Controllers.Admin
             });
         }
 
+        [HttpGet("{id}")]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Admin}")]
+        public async Task<IActionResult> GetScreenById(int id)
+        {
+            var screen = await _unitOfWork.Screen.GetOneAsync(s => s.Id == id, includeProperties: "Theater");
+            if (screen == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Screen not found.",
+                    StatusCode = 404,
+                });
+            }
+
+            return Ok(new SuccessResponseDTO
+            {
+                Data = _mapper.Map<ScreenDTO>(screen),
+                Message = "Screen retrieved successfully."
+            });
+        }
+
         [HttpPost]
         [ValidateModel]
         [Authorize(Roles = Constants.Role_Admin)]

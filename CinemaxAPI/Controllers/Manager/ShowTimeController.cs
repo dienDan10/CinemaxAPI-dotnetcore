@@ -8,10 +8,6 @@ using CinemaxAPI.Repositories;
 using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CinemaxAPI.Controllers.Manager
 {
@@ -29,34 +25,30 @@ namespace CinemaxAPI.Controllers.Manager
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllShowTimes(int? movieId, int? screenId, DateTime? startDate, DateTime? endDate)
+        public async Task<IActionResult> GetAllShowTimes([FromQuery] ShowTimesFilterRequestDTO request)
         {
-            IEnumerable<ShowTime> showTimes;
+            var showtimes = await _unitOfWork.ShowTime.GetShowtimes(request);
 
-            if (startDate.HasValue && endDate.HasValue)
+            if (showtimes == null || !showtimes.Any())
             {
-                var from = startDate.Value.Date;
-                var to = endDate.Value.Date;
-                showTimes = await _unitOfWork.ShowTime.GetAllAsync(
-                    s =>
-                        (!movieId.HasValue || s.MovieId == movieId.Value) &&
-                        (!screenId.HasValue || s.ScreenId == screenId.Value) &&
-                        s.Date.Date >= from && s.Date.Date <= to
-                );
+                return Ok(new SuccessResponseDTO
+                {
+                    Data = new List<ShowTimeDTO>(),
+                    Message = "No ShowTimes found."
+                });
             }
-            else
-            {
-                showTimes = await _unitOfWork.ShowTime.GetAllAsync(
-                    s =>
-                        (!movieId.HasValue || s.MovieId == movieId.Value) &&
-                        (!screenId.HasValue || s.ScreenId == screenId.Value)
-                );
-            }
+            // group showtime by movie and date
+            var showTimesGroup = showtimes.GroupBy(s => new { s.Movie, s.Date })
+                .Select(g => new
+                {
+                    Movie = _mapper.Map<MovieDTO>(g.Key.Movie),
+                    g.Key.Date,
+                    ShowTimes = g.Select(s => _mapper.Map<ShowTimeDTO>(s))
+                });
 
-            var ordered = showTimes.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
             return Ok(new SuccessResponseDTO
             {
-                Data = _mapper.Map<List<ShowTimeDTO>>(ordered),
+                Data = showTimesGroup,
                 Message = "ShowTimes retrieved successfully."
             });
         }
@@ -82,7 +74,7 @@ namespace CinemaxAPI.Controllers.Manager
 
         [HttpPost]
         [ValidateModel]
-        //[Authorize(Roles = Constants.Role_Manager)]
+        [Authorize(Roles = Constants.Role_Manager)]
         public async Task<IActionResult> CreateShowTime([FromBody] CreateShowTimeRequestDTO request)
         {
             var results = new List<object>();
@@ -92,15 +84,34 @@ namespace CinemaxAPI.Controllers.Manager
             {
                 for (int i = 0; i < showTimeData.StartTimes.Count; i++)
                 {
+                    bool isValidShowtime = true;
                     // Convert start and end times from string to TimeSpan
                     var startTime = TimeSpan.Parse(showTimeData.StartTimes[i]);
-                    var endTime = showTimeData.EndTimes.Count > i ? TimeSpan.Parse(showTimeData.EndTimes[i]) : startTime;
+                    var endTime = TimeSpan.Parse(showTimeData.EndTimes[i]);
+
                     // Lấy các suất chiếu cùng screen, cùng ngày
                     var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
                         s => s.ScreenId == request.ScreenId && s.Date.Date == showTimeData.Date.Date
                     )).OrderBy(s => s.StartTime).ToList();
 
+                    // validate showtime conflict
+                    foreach (var st in sameDayShowTimes)
+                    {
+                        // Nếu hai suất chiếu giao nhau trong khoảng 10 phút thì conflict
+                        if (startTime < st.EndTime.Add(TimeSpan.FromMinutes(10)) &&
+                                                       endTime > st.StartTime.Add(TimeSpan.FromMinutes(-10)))
+                        {
+                            isValidShowtime = false;
+                            break;
+                        }
+                    }
 
+                    if (!isValidShowtime)
+                    {
+                        break;
+                    }
+
+                    // create showtime
                     var showTime = new ShowTime
                     {
                         MovieId = request.MovieId,
@@ -149,7 +160,7 @@ namespace CinemaxAPI.Controllers.Manager
 
             // Lấy các showtime khác cùng movie, screen, date (trừ chính nó)
             var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
-                s => s.Id != id && s.MovieId == request.MovieId && s.ScreenId == request.ScreenId && s.Date.Date == request.Date.Date
+                s => s.Id != id && s.MovieId == showTime.MovieId && s.ScreenId == showTime.ScreenId && s.Date.Date == showTime.Date.Date
             )).OrderBy(s => s.StartTime).ToList();
 
 
@@ -168,9 +179,9 @@ namespace CinemaxAPI.Controllers.Manager
                 }
             }
 
-
-
-            _mapper.Map(request, showTime);
+            showTime.StartTime = request.StartTime;
+            showTime.EndTime = request.EndTime;
+            showTime.TicketPrice = request.TicketPrice;
             showTime.LastUpdatedAt = DateTime.Now;
             _unitOfWork.ShowTime.Update(showTime);
             await _unitOfWork.SaveAsync();
