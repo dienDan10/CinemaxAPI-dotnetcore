@@ -45,6 +45,11 @@ namespace CinemaxAPI.Mappings
             CreateMap<ShowTime, ShowTimeDTO>();
             CreateMap<UpdateShowTimeRequestDTO, ShowTime>();
             CreateMap<Seat, SeatDTO>();
+
+            // Concession mappings
+            CreateMap<Concession, ConcessionDTO>();
+            CreateMap<CreateConcessionRequestDTO, Concession>();
+            CreateMap<UpdateConcessionRequestDTO, Concession>();
         }
     }
 

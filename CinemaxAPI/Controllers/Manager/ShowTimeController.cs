@@ -147,11 +147,21 @@ namespace CinemaxAPI.Controllers.Manager
                 });
             }
 
+            // Check if there are any bookings attached to this showtime
+            var bookings = await _unitOfWork.Booking.GetAllAsync(b => b.ShowTimeId == id);
+            if (bookings.Any())
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Cannot update ShowTime with associated bookings.",
+                    StatusCode = 400
+                });
+            }
+
             // Lấy các showtime khác cùng movie, screen, date (trừ chính nó)
             var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
                 s => s.Id != id && s.MovieId == request.MovieId && s.ScreenId == request.ScreenId && s.Date.Date == request.Date.Date
             )).OrderBy(s => s.StartTime).ToList();
-
 
             // kiểm tra conflict showtime
             foreach (var st in sameDayShowTimes)
@@ -167,8 +177,6 @@ namespace CinemaxAPI.Controllers.Manager
                     });
                 }
             }
-
-
 
             _mapper.Map(request, showTime);
             showTime.LastUpdatedAt = DateTime.Now;
