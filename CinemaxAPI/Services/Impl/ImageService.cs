@@ -32,5 +32,23 @@
             // newFileName.jpeg
             return newFileName;
         }
+
+        public bool ValidateImage(IFormFile file, out string? errorMsg)
+        {
+            errorMsg = null;
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                errorMsg = "File size exceeds the maximum limit of 5MB.";
+                return false;
+            }
+            var validExtenstions = new string[] { ".jpg", ".jpeg", ".png" };
+            var fileExtension = Path.GetExtension(file.FileName);
+            if (!validExtenstions.Contains(fileExtension.ToLower()))
+            {
+                errorMsg = "Unsupported file extension. Only .jpg, .jpeg, and .png are allowed.";
+                return false;
+            }
+            return true;
+        }
     }
 }

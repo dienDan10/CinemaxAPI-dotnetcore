@@ -132,19 +132,9 @@ namespace CinemaxAPI.Controllers.Manager
 
         private void ValidateImage(IFormFile file)
         {
-            // check for max file size (5Mb)
-            if (file.Length > 5 * 1024 * 1024)
+            if (!_imageService.ValidateImage(file, out var errorMsg))
             {
-                ModelState.AddModelError("File", "File size exceeds the maximum limit of 5MB.");
-            }
-
-            // check for correct extension (jpg, png, jpeg)
-            var validExtenstions = new string[] { ".jpg", ".jpeg", ".png" };
-            var fileExtension = Path.GetExtension(file.FileName);
-
-            if (!validExtenstions.Contains(fileExtension.ToLower()))
-            {
-                ModelState.AddModelError("File", "Unsupported file extension. Only .jpg, .jpeg, and .png are allowed.");
+                ModelState.AddModelError("File", errorMsg ?? "Invalid file");
             }
         }
 

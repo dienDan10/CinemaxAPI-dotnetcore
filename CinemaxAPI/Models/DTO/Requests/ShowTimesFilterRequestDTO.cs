@@ -1,9 +1,14 @@
-﻿namespace CinemaxAPI.Models.DTO.Requests
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CinemaxAPI.Models.DTO.Requests
 {
     public class ShowTimesFilterRequestDTO
     {
-        public int? screenId;
-        public DateTime? startDate;
-        public DateTime? endTime;
+        public int? MovieId { get; set; }
+        [Required]
+        public int? ScreenId { get; set; }
+        public DateTime? StartDate { get; set; } = null;
+
+        public DateTime? EndDate { get; set; } = null;
     }
 }

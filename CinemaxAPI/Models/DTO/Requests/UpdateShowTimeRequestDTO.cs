@@ -5,18 +5,10 @@ namespace CinemaxAPI.Models.DTO.Requests
     public class UpdateShowTimeRequestDTO
     {
         [Required]
-        public int MovieId { get; set; }
-        [Required]
-        public int ScreenId { get; set; }
-        [Required]
-        public DateTime Date { get; set; }
-        [Required]
         public TimeSpan StartTime { get; set; }
         [Required]
         public TimeSpan EndTime { get; set; }
         [Required]
         public double TicketPrice { get; set; }
-        [Required]
-        public bool IsActive { get; set; }
     }
 }

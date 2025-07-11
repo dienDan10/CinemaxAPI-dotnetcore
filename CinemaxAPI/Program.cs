@@ -46,6 +46,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
+
 // add AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 

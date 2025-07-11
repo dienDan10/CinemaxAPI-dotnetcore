@@ -1,6 +1,6 @@
 ﻿using CinemaxAPI.Data;
 using CinemaxAPI.Models.Domain;
-using CinemaxAPI.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaxAPI.Repositories.Impl
 {
@@ -11,5 +11,15 @@ namespace CinemaxAPI.Repositories.Impl
 
         }
 
+        public async Task<IEnumerable<Seat>> GetBookedSeatsByShowtimeId(int showtimeId)
+        {
+            var seats = await _context.BookingDetails
+                .AsNoTracking()
+                .Where(b => b.Booking.ShowTimeId == showtimeId && b.SeatId.HasValue)
+                .Select(b => b.Seat)
+                .ToListAsync();
+
+            return seats;
+        }
     }
 }
