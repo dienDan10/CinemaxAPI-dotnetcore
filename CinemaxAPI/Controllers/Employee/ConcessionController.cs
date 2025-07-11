@@ -30,7 +30,7 @@ namespace CinemaxAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllConcessions()
         {
-            var items = await _unitOfWork.Concession.GetAllAsync();
+            var items = await _unitOfWork.Concession.GetAllAsync(c => !c.IsRemoved);
             if (items == null || !items.Any())
             {
                 return Ok(new SuccessResponseDTO
@@ -49,7 +49,7 @@ namespace CinemaxAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetConcessionById(int id)
         {
-            var item = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id && c.IsActive);
+            var item = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id && c.IsActive && !c.IsRemoved);
             if (item == null)
             {
                 return NotFound(new ErrorResponseDTO
@@ -118,7 +118,7 @@ namespace CinemaxAPI.Controllers
 
         [HttpPut("{id}")]
         [ValidateModel]
-        [Authorize(Roles = Constants.Role_Manager)]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Employee}")]
         public async Task<IActionResult> UpdateConcession(int id, [FromForm] UpdateConcessionRequestDTO request)
         {
             var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
@@ -171,7 +171,7 @@ namespace CinemaxAPI.Controllers
         }
 
         [HttpPut("{id}/disable")]
-        [Authorize(Roles = Constants.Role_Manager)]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Employee}")]
         public async Task<IActionResult> DisableConcession(int id)
         {
             var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
@@ -195,7 +195,7 @@ namespace CinemaxAPI.Controllers
         }
 
         [HttpPut("{id}/enable")]
-        [Authorize(Roles = Constants.Role_Manager)]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Employee}")]
         public async Task<IActionResult> EnableConcession(int id)
         {
             var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
@@ -218,6 +218,29 @@ namespace CinemaxAPI.Controllers
             });
         }
 
+        [HttpDelete("{id}")]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Employee}")]
+        public async Task<IActionResult> DeleteConcession(int id)
+        {
+            var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
+            if (concession == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Concession not found.",
+                    StatusCode = 404
+                });
+            }
+            concession.IsRemoved = true;
+            concession.LastUpdatedAt = DateTime.Now;
+            _unitOfWork.Concession.Update(concession);
+            await _unitOfWork.SaveAsync();
+            return Ok(new SuccessResponseDTO
+            {
+                Data = concession.Id,
+                Message = "Concession deleted successfully."
+            });
+        }
 
         private void ValidateImage(IFormFile file)
         {
@@ -226,6 +249,7 @@ namespace CinemaxAPI.Controllers
                 ModelState.AddModelError("File", errorMsg ?? "Invalid file");
             }
         }
+
     }
 }
 

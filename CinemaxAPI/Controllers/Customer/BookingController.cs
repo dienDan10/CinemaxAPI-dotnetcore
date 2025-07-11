@@ -35,6 +35,9 @@ namespace CinemaxAPI.Controllers.Customer
                 });
             }
 
+            // get all active concessions
+            var concessions = await _unitOfWork.Concession.GetAllAsync(c => c.IsActive && !c.IsRemoved);
+
             // get the all active seats for the showtime
             var seats = await _unitOfWork.Seat.GetAllAsync(s => s.ScreenId == showtime.ScreenId && s.IsActive && !s.IsRemoved);
 
@@ -47,6 +50,7 @@ namespace CinemaxAPI.Controllers.Customer
                 Movie = _mapper.Map<MovieDTO>(showtime.Movie),
                 Theater = _mapper.Map<TheaterDTO>(showtime.Screen.Theater),
                 Screen = _mapper.Map<ScreenDTO>(showtime.Screen),
+                Concessions = _mapper.Map<List<ConcessionDTO>>(concessions),
                 Seats = CreateShowtimeSeat(seats, bookedSeats)
             };
 

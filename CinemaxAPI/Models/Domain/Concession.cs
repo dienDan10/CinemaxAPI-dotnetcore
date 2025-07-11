@@ -11,6 +11,7 @@ namespace CinemaxAPI.Models.Domain
         public decimal Price { get; set; }
         public string? ImageUrl { get; set; }
         public bool IsActive { get; set; } = true;
+        public bool IsRemoved { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdatedAt { get; set; } = DateTime.Now;
     }
