@@ -82,6 +82,12 @@ namespace CinemaxAPI.Controllers.Manager
 
             foreach (var showTimeData in request.ShowTimes)
             {
+                // Lấy các suất chiếu cùng screen, cùng ngày
+                var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
+                    s => s.ScreenId == request.ScreenId && s.Date.Date == showTimeData.Date.Date
+                )).OrderBy(s => s.StartTime).ToList();
+
+
                 for (int i = 0; i < showTimeData.StartTimes.Count; i++)
                 {
                     bool isValidShowtime = true;
@@ -89,10 +95,7 @@ namespace CinemaxAPI.Controllers.Manager
                     var startTime = TimeSpan.Parse(showTimeData.StartTimes[i]);
                     var endTime = TimeSpan.Parse(showTimeData.EndTimes[i]);
 
-                    // Lấy các suất chiếu cùng screen, cùng ngày
-                    var sameDayShowTimes = (await _unitOfWork.ShowTime.GetAllAsync(
-                        s => s.ScreenId == request.ScreenId && s.Date.Date == showTimeData.Date.Date
-                    )).OrderBy(s => s.StartTime).ToList();
+
 
                     // validate showtime conflict
                     foreach (var st in sameDayShowTimes)
@@ -105,8 +108,6 @@ namespace CinemaxAPI.Controllers.Manager
                             break;
                         }
                     }
-
-
 
                     // create showtime
                     var showTime = new ShowTime
