@@ -106,10 +106,7 @@ namespace CinemaxAPI.Controllers.Manager
                         }
                     }
 
-                    if (!isValidShowtime)
-                    {
-                        break;
-                    }
+
 
                     // create showtime
                     var showTime = new ShowTime
@@ -124,6 +121,13 @@ namespace CinemaxAPI.Controllers.Manager
                         LastUpdatedAt = DateTime.Now,
                         IsActive = true
                     };
+
+                    if (!isValidShowtime)
+                    {
+                        results.Add(new { Success = false, ShowTime = showTime });
+                        break;
+                    }
+
                     showTimesToAdd.Add(showTime);
                     results.Add(new { Success = true, ShowTime = _mapper.Map<ShowTimeDTO>(showTime) });
 

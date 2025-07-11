@@ -24,7 +24,7 @@ namespace CinemaxAPI.Controllers.Customer
         public async Task<IActionResult> GetShowtimeDetail(int id)
         {
             // get showtimes
-            var showtime = await _unitOfWork.ShowTime.GetOneAsync(st => st.Id == id && st.Date >= DateTime.Now.Date && st.StartTime >= DateTime.Now.TimeOfDay, includeProperties: "Screen,Movie,Screen.Theater");
+            var showtime = await _unitOfWork.ShowTime.GetOneAsync(st => st.Id == id && st.Date >= DateTime.Now.Date, includeProperties: "Screen,Movie,Screen.Theater");
 
             if (showtime == null)
             {
