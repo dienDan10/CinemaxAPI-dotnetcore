@@ -45,6 +45,10 @@ namespace CinemaxAPI.Mappings
             CreateMap<ShowTime, ShowTimeDTO>();
             CreateMap<UpdateShowTimeRequestDTO, ShowTime>();
             CreateMap<Seat, SeatDTO>();
+
+            // concession mappings
+            CreateMap<Concession, ConcessionDTO>()
+                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => $"{httpContextAccessor.HttpContext.Request.Scheme}://{httpContextAccessor.HttpContext.Request.Host}/Images/{src.ImageUrl}"));
         }
     }
 

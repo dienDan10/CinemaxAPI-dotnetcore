@@ -8,13 +8,7 @@ using CinemaxAPI.Repositories;
 using CinemaxAPI.Services;
 using CinemaxAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CinemaxAPI.Controllers
 {
@@ -22,13 +16,13 @@ namespace CinemaxAPI.Controllers
     [ApiController]
     public class ConcessionController : ControllerBase
     {
-        private readonly IConcessionRepository _repo;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IImageService _imageService;
         private readonly IMapper _mapper;
 
-        public ConcessionController(IConcessionRepository repo, IImageService imageService, IMapper mapper)
+        public ConcessionController(IUnitOfWork unitOfWork, IImageService imageService, IMapper mapper)
         {
-            _repo = repo;
+            _unitOfWork = unitOfWork;
             _imageService = imageService;
             _mapper = mapper;
         }
@@ -36,7 +30,7 @@ namespace CinemaxAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllConcessions()
         {
-            var items = await _repo.GetAllAsync();
+            var items = await _unitOfWork.Concession.GetAllAsync();
             if (items == null || !items.Any())
             {
                 return Ok(new SuccessResponseDTO
@@ -55,7 +49,7 @@ namespace CinemaxAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetConcessionById(int id)
         {
-            var item = await _repo.GetByIdAsync(id);
+            var item = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id && c.IsActive);
             if (item == null)
             {
                 return NotFound(new ErrorResponseDTO
@@ -73,7 +67,7 @@ namespace CinemaxAPI.Controllers
 
         [HttpPost]
         [ValidateModel]
-        [Authorize(Roles = Constants.Role_Manager)]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Employee}")]
         public async Task<IActionResult> CreateConcession([FromForm] CreateConcessionRequestDTO request)
         {
             var newConcession = new Concession
@@ -112,7 +106,8 @@ namespace CinemaxAPI.Controllers
             newConcession.CreatedAt = DateTime.Now;
             newConcession.LastUpdatedAt = DateTime.Now;
             newConcession.IsActive = true;
-            await _repo.CreateAsync(newConcession);
+            await _unitOfWork.Concession.AddAsync(newConcession);
+            await _unitOfWork.SaveAsync();
             var dto = _mapper.Map<ConcessionDTO>(newConcession);
             return CreatedAtAction(nameof(GetConcessionById), new { id = newConcession.Id }, new SuccessResponseDTO
             {
@@ -126,7 +121,7 @@ namespace CinemaxAPI.Controllers
         [Authorize(Roles = Constants.Role_Manager)]
         public async Task<IActionResult> UpdateConcession(int id, [FromForm] UpdateConcessionRequestDTO request)
         {
-            var concession = await _repo.GetByIdAsync(id);
+            var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
             if (concession == null)
             {
                 return NotFound(new ErrorResponseDTO
@@ -165,7 +160,8 @@ namespace CinemaxAPI.Controllers
                 concession.ImageUrl = newFileName;
             }
             concession.LastUpdatedAt = DateTime.Now;
-            await _repo.UpdateAsync(id, concession);
+            _unitOfWork.Concession.Update(concession);
+            await _unitOfWork.SaveAsync();
             var dto = _mapper.Map<ConcessionDTO>(concession);
             return Ok(new SuccessResponseDTO
             {
@@ -178,7 +174,7 @@ namespace CinemaxAPI.Controllers
         [Authorize(Roles = Constants.Role_Manager)]
         public async Task<IActionResult> DisableConcession(int id)
         {
-            var concession = await _repo.GetByIdAsync(id);
+            var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
             if (concession == null)
             {
                 return NotFound(new ErrorResponseDTO
@@ -189,7 +185,8 @@ namespace CinemaxAPI.Controllers
             }
             concession.IsActive = false;
             concession.LastUpdatedAt = DateTime.Now;
-            await _repo.UpdateAsync(id, concession);
+            _unitOfWork.Concession.Update(concession);
+            await _unitOfWork.SaveAsync();
             return Ok(new SuccessResponseDTO
             {
                 Data = concession.Id,
@@ -201,7 +198,7 @@ namespace CinemaxAPI.Controllers
         [Authorize(Roles = Constants.Role_Manager)]
         public async Task<IActionResult> EnableConcession(int id)
         {
-            var concession = await _repo.GetByIdAsync(id);
+            var concession = await _unitOfWork.Concession.GetOneAsync(c => c.Id == id);
             if (concession == null)
             {
                 return NotFound(new ErrorResponseDTO
@@ -212,7 +209,8 @@ namespace CinemaxAPI.Controllers
             }
             concession.IsActive = true;
             concession.LastUpdatedAt = DateTime.Now;
-            await _repo.UpdateAsync(id, concession);
+            _unitOfWork.Concession.Update(concession);
+            await _unitOfWork.SaveAsync();
             return Ok(new SuccessResponseDTO
             {
                 Data = concession.Id,
@@ -220,25 +218,6 @@ namespace CinemaxAPI.Controllers
             });
         }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = Constants.Role_Manager)]
-        public async Task<IActionResult> DeleteConcession(int id)
-        {
-            var result = await _repo.DeleteAsync(id);
-            if (result == null)
-            {
-                return NotFound(new ErrorResponseDTO
-                {
-                    Message = "Concession not found.",
-                    StatusCode = 404
-                });
-            }
-            return Ok(new SuccessResponseDTO
-            {
-                Data = result.Id,
-                Message = "Concession deleted successfully."
-            });
-        }
 
         private void ValidateImage(IFormFile file)
         {

@@ -45,7 +45,6 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-builder.Services.AddScoped<IConcessionRepository, ConcessionRepository>();
 
 
 // add AutoMapper
