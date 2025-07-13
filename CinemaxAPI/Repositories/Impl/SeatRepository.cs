@@ -15,7 +15,7 @@ namespace CinemaxAPI.Repositories.Impl
         {
             var seats = await _context.BookingDetails
                 .AsNoTracking()
-                .Where(b => b.Booking.ShowTimeId == showtimeId && b.SeatId.HasValue)
+                .Where(b => b.Booking.ShowTimeId == showtimeId && (b.Booking.IsActive || b.Booking.CreatedAt.AddMinutes(5) >= DateTime.Now))
                 .Select(b => b.Seat)
                 .ToListAsync();
 

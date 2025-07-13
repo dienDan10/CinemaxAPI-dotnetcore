@@ -19,7 +19,7 @@ namespace CinemaxAPI.Models.Domain
         [ValidateNever]
         public Concession Concession { get; set; }
         public int Quantity { get; set; }
-        public double Price { get; set; }
+        public decimal Price { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdatedAt { get; set; } = DateTime.Now;
     }
