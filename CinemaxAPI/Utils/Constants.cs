@@ -15,5 +15,9 @@
         public const string BookingStatus_Success = "Success";
         public const string BookingStatus_Failed = "Failed";
         public const string BookingStatus_CheckedIn = "Checked In";
+
+
+        public const string PaymentMethod_VnPay = "VnPay";
+        public const string PaymentMethod_Atm = "ATM";
     }
 }

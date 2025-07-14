@@ -18,6 +18,7 @@ namespace CinemaxAPI.Services.Impl
         {
             // create claims
             var claims = new List<Claim>();
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
             claims.Add(new Claim(ClaimTypes.Email, user.Email));
 
             foreach (var role in roles)

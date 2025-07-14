@@ -14,6 +14,11 @@ namespace CinemaxAPI.Models.Domain
         [ValidateNever]
         public ApplicationUser? User { get; set; }
 
+        public string? EmployeeId { get; set; }
+        [ForeignKey("EmployeeId")]
+        [ValidateNever]
+        public ApplicationUser? Employee { get; set; }
+
         public int? ConcessionOrderId { get; set; }
         [ForeignKey("ConcessionOrderId")]
         [ValidateNever]
@@ -31,10 +36,9 @@ namespace CinemaxAPI.Models.Domain
         [Required]
         public string? PhoneNumber { get; set; }
 
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         public string? PaymentMethod { get; set; }
         public DateTime PaymentDate { get; set; }
-        public string? SessionId { get; set; }
         public string? PaymentIntentId { get; set; }
         public string? PaymentStatus { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
