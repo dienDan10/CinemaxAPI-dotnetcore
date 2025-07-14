@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Net;
+using System.Security.Claims;
 
 namespace CinemaxAPI.Controllers.Customer
 {
@@ -22,17 +23,22 @@ namespace CinemaxAPI.Controllers.Customer
         private readonly IMapper _mapper;
         private readonly IVNPayService _vnPayService;
         private readonly VNPaySettings _vnPaySettings;
+        private readonly IEmailService _emailService;
+        private readonly IQRCodeService _qrCodeService;
 
-        public BookingController(IUnitOfWork unitOfWork, IMapper mapper, IVNPayService vnPayService, IOptions<VNPaySettings> vnPayOptions)
+        public BookingController(IUnitOfWork unitOfWork, IMapper mapper, IVNPayService vnPayService, IOptions<VNPaySettings> vnPayOptions, IEmailService emailService, IQRCodeService qrCodeService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _vnPayService = vnPayService;
             _vnPaySettings = vnPayOptions.Value;
+            _emailService = emailService;
+            _qrCodeService = qrCodeService;
         }
 
         // get showtime details includes theater, movie, concession, seats
         [HttpGet("showtimes/{id}")]
+        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Customer}")]
         public async Task<IActionResult> GetShowtimeDetail(int id)
         {
             // get showtimes
@@ -215,6 +221,7 @@ namespace CinemaxAPI.Controllers.Customer
             // create payment
             var payment = new Payment
             {
+                UserId = bookingRequest.UserId,
                 BookingId = booking.Id,
                 ConcessionOrderId = concessionOrder?.Id,
                 Email = bookingRequest.Email,
@@ -257,6 +264,8 @@ namespace CinemaxAPI.Controllers.Customer
 
         // verify vnpay payment response
         [HttpPost("vnpay/verify")]
+        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
+        [ValidateModel]
         public async Task<IActionResult> VerifyVNPayReturn([FromBody] VNPayVerifyRequestDTO request)
         {
             var payment = await _unitOfWork.Payment.GetOneAsync(p => p.Id == request.PaymentId, "Booking");
@@ -313,6 +322,16 @@ namespace CinemaxAPI.Controllers.Customer
                 }
 
                 await _unitOfWork.SaveAsync();
+
+                // send ticket email to customer
+                var barcodeText = $"CineMax_Ticket_{payment.Id}_{DateTime.Now:yyyyMMddHHmmss}";
+                var barcodeBytes = await _qrCodeService.GenerateQRCodeAsync(barcodeText, 300, 300);
+                await _emailService.SendEmailWithAttachmentAsync(payment.Email,
+                        "🎟 Your CineMax Ticket Confirmation",
+                        HtmlContent.GetTicketEmailHtml(barcodeText, $"{Convert.ToBase64String(barcodeBytes)}"),
+                        barcodeBytes,
+                        $"{barcodeText}.png");
+
                 return Ok(new SuccessResponseDTO
                 {
                     Message = "Payment verified successfully.",
@@ -332,5 +351,80 @@ namespace CinemaxAPI.Controllers.Customer
                 StatusCode = 400
             });
         }
+
+        [HttpGet("payment/{id}")]
+        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
+        public async Task<IActionResult> GetBookingDetails(int id)
+        {
+            // get the payment
+            var payment = await _unitOfWork.Payment.GetOneAsync(p => p.Id == id, includeProperties: "Booking,ConcessionOrder");
+
+            if (payment == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Payment not found.",
+                    StatusCode = 404
+                });
+            }
+
+            // check if the requester is customer, compare id and user id in payment
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (User.IsInRole(Constants.Role_Customer) && payment.UserId != userId)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "You are not the owner of this transaction.",
+                    StatusCode = 400
+                });
+            }
+
+            // get the selected seats
+            var bookingDetails = await _unitOfWork.BookingDetail.GetAllAsync(bd => bd.BookingId == payment.BookingId, includeProperties: "Seat");
+            var selectedSeats = bookingDetails.Where(bd => bd.Seat != null)
+                .Select(bd => _mapper.Map<SeatDTO>(bd.Seat)).ToList();
+
+            // get the ordered concessions
+            var concessionOrderDetails = await _unitOfWork.ConcessionOrderDetail
+                .GetAllAsync(cod => cod.ConcessionOrderId == payment.ConcessionOrderId, includeProperties: "Concession");
+            var selectedConcessions = concessionOrderDetails.Where(cod => cod.Concession != null)
+                .Select(cod => new
+                {
+                    cod.Concession.Id,
+                    cod.Concession.Name,
+                    cod.Concession.Price,
+                    cod.Quantity,
+                }).ToList();
+
+            // get the showtime
+            var showtime = await _unitOfWork.ShowTime.GetOneAsync(st => st.Id == payment.Booking.ShowTimeId, includeProperties: "Movie,Screen,Screen.Theater");
+
+            if (showtime == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Showtime not found.",
+                    StatusCode = 404
+                });
+            }
+
+            return Ok(new SuccessResponseDTO
+            {
+                Data = new
+                {
+                    Payment = _mapper.Map<PaymentDTO>(payment),
+                    ShowTime = _mapper.Map<ShowTimeDTO>(showtime),
+                    Movie = _mapper.Map<MovieDTO>(showtime.Movie),
+                    Theater = _mapper.Map<TheaterDTO>(showtime.Screen.Theater),
+                    Screen = _mapper.Map<ScreenDTO>(showtime.Screen),
+                    Seats = selectedSeats,
+                    Concessions = selectedConcessions
+                },
+                Message = "Booking details retrieved successfully."
+            });
+
+        }
+
+
     }
 }
