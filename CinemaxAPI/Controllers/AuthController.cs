@@ -31,104 +31,6 @@ namespace CinemaxAPI.Controllers
             _configuration = configuration;
         }
 
-        [HttpGet("create-roles")]
-        public async Task<IActionResult> CreateRoles()
-        {
-            var roles = new[] { Constants.Role_Employee, Constants.Role_Admin, Constants.Role_Customer, Constants.Role_Manager };
-            foreach (var role in roles)
-            {
-                if (!await _roleManager.RoleExistsAsync(role))
-                {
-                    var result = await _roleManager.CreateAsync(new IdentityRole(role));
-                    if (!result.Succeeded)
-                    {
-                        return BadRequest(new ErrorResponseDTO
-                        {
-                            Message = "Role creation failed",
-                            Errors = string.Join(", ", result.Errors.Select(e => e.Description)),
-                            StatusCode = 400,
-                            Status = "Error"
-                        });
-                    }
-                }
-            }
-            return Ok(new { Message = "Roles created successfully" });
-        }
-
-        [HttpPost("register-admin")]
-        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequestDTO request)
-        {
-            var newUser = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                DisplayName = request.Username
-            };
-
-            // save user
-            var createUserResult = await _userManager.CreateAsync(newUser, request.Password);
-            if (!createUserResult.Succeeded)
-            {
-                return BadRequest(new ErrorResponseDTO
-                {
-                    Message = "User creation failed",
-                    Errors = string.Join(", ", createUserResult.Errors.Select(e => e.Description)),
-                    StatusCode = 400,
-                    Status = "Error"
-                });
-            }
-
-            // assign manager role
-            await _userManager.AddToRoleAsync(newUser, Constants.Role_Admin);
-
-            // send email confirmation link
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-            await _userManager.ConfirmEmailAsync(newUser, token);
-
-            return Ok(new SuccessResponseDTO
-            {
-                Message = "Admin registered successfully!",
-                Data = newUser.Id,
-            });
-        }
-
-        [HttpPost("register-employee")]
-        public async Task<IActionResult> RegisterEmployee([FromBody] RegisterRequestDTO request)
-        {
-            var newUser = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                DisplayName = request.Username
-            };
-
-            // save user
-            var createUserResult = await _userManager.CreateAsync(newUser, request.Password);
-            if (!createUserResult.Succeeded)
-            {
-                return BadRequest(new ErrorResponseDTO
-                {
-                    Message = "User creation failed",
-                    Errors = string.Join(", ", createUserResult.Errors.Select(e => e.Description)),
-                    StatusCode = 400,
-                    Status = "Error"
-                });
-            }
-
-            // assign employee role
-            await _userManager.AddToRoleAsync(newUser, Constants.Role_Employee);
-
-            // send email confirmation link
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-            await _userManager.ConfirmEmailAsync(newUser, token);
-
-            return Ok(new SuccessResponseDTO
-            {
-                Message = "Employee registered successfully!",
-                Data = newUser.Id,
-            });
-        }
-
         // this api is for customer to register
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
@@ -299,6 +201,65 @@ namespace CinemaxAPI.Controllers
                     accessToken = token,
                     user = userProfile
                 }
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDTO request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Email not found",
+                    StatusCode = 400,
+                    Status = "Error"
+                });
+            }
+            // Generate password reset token
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+            // Generate reset link
+            var clientUrl = _configuration["CinemaxClients:Website"];
+            var resetLink = $"{clientUrl}/reset-password?userId={user.Id}&token={encodedToken}";
+            // Send email with reset link
+            await _emailService.SendEmailAsync(request.Email, "Reset your password", $"Click to reset: <a href=\"{resetLink}\">Reset password</a>");
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Password reset link sent to your email",
+                Data = user.Id,
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDTO request)
+        {
+            var user = await _userManager.FindByIdAsync(request.UserId);
+            if (user == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "User not found",
+                    StatusCode = 404,
+                    Status = "Error"
+                });
+            }
+            var result = await _userManager.ResetPasswordAsync(user, request.ResetToken, request.Password);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Password reset failed",
+                    Errors = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    StatusCode = 400,
+                    Status = "Error"
+                });
+            }
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Password reset successfully",
+                Data = user.Id,
             });
         }
     }
