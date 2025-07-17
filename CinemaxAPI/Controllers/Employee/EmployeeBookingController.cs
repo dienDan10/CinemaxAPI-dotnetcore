@@ -37,7 +37,7 @@ namespace CinemaxAPI.Controllers.Employee
                 .Select(g => new
                 {
                     g.Key.Date,
-                    g.Key.Movie,
+                    Movie = _mapper.Map<MovieDTO>(g.Key.Movie),
                     ShowTimes = g.Select(st => _mapper.Map<ShowTimeDTO>(st)).ToList()
                 });
 
