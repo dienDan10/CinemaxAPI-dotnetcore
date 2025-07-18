@@ -169,7 +169,7 @@ namespace CinemaxAPI.Controllers.Employee
             // create payment
             var payment = new Payment
             {
-                UserId = bookingRequest.UserId,
+                EmployeeId = bookingRequest.UserId,
                 BookingId = booking.Id,
                 ConcessionOrderId = concessionOrder?.Id,
                 Email = bookingRequest.Email,
