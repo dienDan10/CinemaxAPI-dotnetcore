@@ -38,7 +38,7 @@ namespace CinemaxAPI.Controllers.Customer
 
         // get showtime details includes theater, movie, concession, seats
         [HttpGet("showtimes/{id}")]
-        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Customer}")]
+        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
         public async Task<IActionResult> GetShowtimeDetail(int id)
         {
             // get showtimes
