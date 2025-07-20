@@ -41,7 +41,7 @@ namespace CinemaxAPI.Data
             // Keep the cascade delete from Booking to BookingDetail
             modelBuilder.Entity<BookingDetail>()
                 .HasOne(bd => bd.Booking)
-                .WithMany()
+                .WithMany(b => b.BookingDetails)
                 .HasForeignKey(bd => bd.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 

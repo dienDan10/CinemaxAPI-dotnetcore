@@ -6,6 +6,7 @@ using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Repositories;
 using CinemaxAPI.Services;
 using CinemaxAPI.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaxAPI.Controllers.Employee
@@ -27,6 +28,7 @@ namespace CinemaxAPI.Controllers.Employee
         }
 
         [HttpGet("showtimes")]
+        [Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> GetShowTimes([FromQuery] EmployeeGetShowtimesRequestDTO request)
         {
             var showTimes = await _unitOfWork.ShowTime.GetAllAsync(
@@ -49,6 +51,7 @@ namespace CinemaxAPI.Controllers.Employee
         }
 
         [HttpPost]
+        [Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequestDTO bookingRequest)
         {
             // check if seats have been booked

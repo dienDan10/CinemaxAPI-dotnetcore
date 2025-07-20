@@ -1,4 +1,5 @@
 ﻿using CinemaxAPI.Models.Domain;
+using CinemaxAPI.Models.DTO;
 
 namespace CinemaxAPI.Repositories
 {
@@ -8,5 +9,7 @@ namespace CinemaxAPI.Repositories
         void UpdateStatus(int id, string status);
         // Update the return type if needed based on your models
         //object GetAllInTheater(DateTime startDate, DateTime endDate, int theaterId, int start, int length);
+
+        Task<IEnumerable<RevenueItemDTO>> GetRevenueItemsAsync(DateTime startDate, DateTime endDate, int? theaterId = null);
     }
 }

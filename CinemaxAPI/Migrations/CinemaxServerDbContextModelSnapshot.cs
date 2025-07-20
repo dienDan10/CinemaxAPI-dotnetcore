@@ -55,7 +55,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("ShowTimeId");
 
-                    b.ToTable("Bookings");
+                    b.ToTable("Bookings", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.BookingDetail", b =>
@@ -91,7 +91,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("SeatId");
 
-                    b.ToTable("BookingDetails");
+                    b.ToTable("BookingDetails", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.Concession", b =>
@@ -130,7 +130,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Concessions");
+                    b.ToTable("Concessions", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.ConcessionOrder", b =>
@@ -158,7 +158,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ConcessionOrders");
+                    b.ToTable("ConcessionOrders", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.ConcessionOrderDetail", b =>
@@ -193,7 +193,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("ConcessionOrderId");
 
-                    b.ToTable("ConcessionOrderDetails");
+                    b.ToTable("ConcessionOrderDetails", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.Movie", b =>
@@ -247,7 +247,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Movies");
+                    b.ToTable("Movies", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.Payment", b =>
@@ -313,7 +313,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.Province", b =>
@@ -330,7 +330,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Provinces");
+                    b.ToTable("Provinces", (string)null);
 
                     b.HasData(
                         new
@@ -379,7 +379,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("Screens");
+                    b.ToTable("Screens", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.Seat", b =>
@@ -416,7 +416,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("ScreenId");
 
-                    b.ToTable("Seats");
+                    b.ToTable("Seats", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.ShowTime", b =>
@@ -460,7 +460,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("ScreenId");
 
-                    b.ToTable("ShowTimes");
+                    b.ToTable("ShowTimes", (string)null);
                 });
 
             modelBuilder.Entity("CinemaxAPI.Models.Domain.Theater", b =>
@@ -507,7 +507,7 @@ namespace CinemaxAPI.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.ToTable("Theaters");
+                    b.ToTable("Theaters", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

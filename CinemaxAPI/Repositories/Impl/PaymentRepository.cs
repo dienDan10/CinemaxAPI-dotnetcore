@@ -1,5 +1,8 @@
 ﻿using CinemaxAPI.Data;
 using CinemaxAPI.Models.Domain;
+using CinemaxAPI.Models.DTO;
+using CinemaxAPI.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaxAPI.Repositories.Impl
 {
@@ -8,6 +11,57 @@ namespace CinemaxAPI.Repositories.Impl
         public PaymentRepository(CinemaxServerDbContext context) : base(context)
         {
 
+        }
+
+        public async Task<IEnumerable<RevenueItemDTO>> GetRevenueItemsAsync(DateTime startDate, DateTime endDate, int? theaterId = null)
+        {
+            //var query = _context.Payments
+            //    .Where(p => p.PaymentDate >= startDate
+            //        && p.PaymentDate <= endDate
+            //        && p.PaymentStatus == Constants.PaymentStatus_Success
+            //        && (!theaterId.HasValue || p.Booking.ShowTime.Screen.Theater.Id == theaterId.Value))
+            //    .Select(p => new RevenueItemDTO
+            //    {
+            //        Date = DateOnly.FromDateTime(p.PaymentDate),
+            //        Payment = new PaymentConciseDTO
+            //        {
+            //            Id = p.Id,
+            //            PaymentDate = p.PaymentDate,
+            //            TicketCount = p.Booking.BookingDetails.Count,
+            //            Amount = p.Amount,
+            //            PaymentStatus = p.PaymentStatus
+            //        },
+            //        Movie = new MovieConciseDTO
+            //        {
+            //            Id = p.Booking.ShowTime.Movie.Id,
+            //            Title = p.Booking.ShowTime.Movie.Title
+            //        }
+            //    });
+
+            var query = from p in _context.Payments
+                        where p.PaymentDate >= startDate &&
+                              p.PaymentDate <= endDate &&
+                              p.PaymentStatus == Constants.PaymentStatus_Success
+                        let ticketCount = p.Booking.BookingDetails.Count
+                        select new RevenueItemDTO
+                        {
+                            Date = DateOnly.FromDateTime(p.PaymentDate),
+                            Payment = new PaymentConciseDTO
+                            {
+                                Id = p.Id,
+                                PaymentDate = p.PaymentDate,
+                                TicketCount = ticketCount,
+                                Amount = p.Amount,
+                                PaymentStatus = p.PaymentStatus
+                            },
+                            Movie = new MovieConciseDTO
+                            {
+                                Id = p.Booking.ShowTime.Movie.Id,
+                                Title = p.Booking.ShowTime.Movie.Title
+                            }
+                        };
+
+            return await query.ToListAsync();
         }
 
         //public PaymentListVM GetAllInTheater(DateTime startDate, DateTime endDate, int theaterId, int start, int length)
