@@ -43,6 +43,7 @@ namespace CinemaxAPI.Repositories.Impl
                               p.PaymentDate <= endDate &&
                               p.PaymentStatus == Constants.PaymentStatus_Success
                         let ticketCount = p.Booking.BookingDetails.Count
+                        orderby p.PaymentDate ascending
                         select new RevenueItemDTO
                         {
                             Date = DateOnly.FromDateTime(p.PaymentDate),
