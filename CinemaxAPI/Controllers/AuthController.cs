@@ -262,5 +262,36 @@ namespace CinemaxAPI.Controllers
                 Data = user.Id,
             });
         }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDTO request)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorResponseDTO
+                {
+                    Message = "User not found",
+                    StatusCode = 401,
+                    Status = "Error"
+                });
+            }
+            var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Password incorrect",
+                    Errors = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    StatusCode = 400,
+                    Status = "Error"
+                });
+            }
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Password changed successfully",
+                Data = user.Id,
+            });
+        }
     }
 }
