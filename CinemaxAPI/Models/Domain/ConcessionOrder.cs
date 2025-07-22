@@ -11,5 +11,7 @@ namespace CinemaxAPI.Models.Domain
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdatedAt { get; set; } = DateTime.Now;
+
+        public ICollection<ConcessionOrderDetail> ConcessionOrderDetails { get; set; } = new List<ConcessionOrderDetail>();
     }
 }

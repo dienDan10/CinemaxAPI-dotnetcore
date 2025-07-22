@@ -43,6 +43,15 @@ namespace CinemaxAPI.Repositories.Impl
                               p.PaymentDate <= endDate &&
                               p.PaymentStatus == Constants.PaymentStatus_Success
                         let ticketCount = p.Booking.BookingDetails.Count
+                        let concessions = p.ConcessionOrder != null
+                            ? p.ConcessionOrder.ConcessionOrderDetails.Select(cod => new ConcessionConciseDTO
+                            {
+                                Id = cod.Concession.Id,
+                                Name = cod.Concession.Name,
+                                Quantity = cod.Quantity,
+                                Amount = cod.Concession.Price * cod.Quantity
+                            }).ToList()
+                            : new List<ConcessionConciseDTO>()
                         orderby p.PaymentDate ascending
                         select new RevenueItemDTO
                         {
@@ -50,16 +59,20 @@ namespace CinemaxAPI.Repositories.Impl
                             Payment = new PaymentConciseDTO
                             {
                                 Id = p.Id,
+                                TheaterId = p.Booking.ShowTime.Screen.TheaterId,
+                                TheaterName = p.Booking.ShowTime.Screen.Theater.Name,
                                 PaymentDate = p.PaymentDate,
-                                TicketCount = ticketCount,
                                 Amount = p.Amount,
                                 PaymentStatus = p.PaymentStatus
                             },
                             Movie = new MovieConciseDTO
                             {
                                 Id = p.Booking.ShowTime.Movie.Id,
-                                Title = p.Booking.ShowTime.Movie.Title
-                            }
+                                Title = p.Booking.ShowTime.Movie.Title,
+                                TicketCount = ticketCount,
+                                Amount = (decimal)(ticketCount * p.Booking.ShowTime.TicketPrice)
+                            },
+                            Concessions = concessions
                         };
 
             return await query.ToListAsync();

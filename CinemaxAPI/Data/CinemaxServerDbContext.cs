@@ -45,6 +45,12 @@ namespace CinemaxAPI.Data
                 .HasForeignKey(bd => bd.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ConcessionOrder>()
+                .HasMany(co => co.ConcessionOrderDetails)
+                .WithOne(cod => cod.ConcessionOrder)
+                .HasForeignKey(cod => cod.ConcessionOrderId)
+                .OnDelete(DeleteBehavior.Cascade); // Optional
+
             modelBuilder.Entity<Province>().HasData(
            new Province { Id = 1, Name = "Hà Nội" },
            new Province { Id = 2, Name = "Hồ Chí Minh" });
