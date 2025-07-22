@@ -363,7 +363,7 @@ namespace CinemaxAPI.Controllers.Customer
         }
 
         [HttpGet("payment/{id}")]
-        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
+        //[Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
         public async Task<IActionResult> GetBookingDetails(int id)
         {
             // get the payment
@@ -423,6 +423,7 @@ namespace CinemaxAPI.Controllers.Customer
                 Data = new
                 {
                     Payment = _mapper.Map<PaymentDTO>(payment),
+                    Booking = _mapper.Map<BookingDTO>(payment.Booking),
                     ShowTime = _mapper.Map<ShowTimeDTO>(showtime),
                     Movie = _mapper.Map<MovieDTO>(showtime.Movie),
                     Theater = _mapper.Map<TheaterDTO>(showtime.Screen.Theater),

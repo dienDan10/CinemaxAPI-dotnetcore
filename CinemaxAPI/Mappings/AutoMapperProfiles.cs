@@ -52,6 +52,9 @@ namespace CinemaxAPI.Mappings
 
             // payment mappings
             CreateMap<Payment, PaymentDTO>();
+
+            // booking mappings
+            CreateMap<Booking, BookingDTO>();
         }
     }
 

@@ -86,7 +86,7 @@ namespace CinemaxAPI.Controllers.Employee
                 ShowTimeId = bookingRequest.ShowtimeId,
                 BookingDate = DateTime.Now,
                 TotalAmount = (decimal)totalAmount,
-                BookingStatus = Constants.BookingStatus_Pending,
+                BookingStatus = Constants.BookingStatus_Success,
                 IsActive = true
             };
 
@@ -197,7 +197,7 @@ namespace CinemaxAPI.Controllers.Employee
                     barcodeBytes,
                     $"{barcodeText}.png");
 
-            // return payment url to client
+
             return Ok(new SuccessResponseDTO
             {
                 Data = new
@@ -207,6 +207,55 @@ namespace CinemaxAPI.Controllers.Employee
                 Message = "Booking created successfully.",
             });
 
+        }
+
+        [HttpPost("checkin")]
+        [Authorize(Roles = Constants.Role_Employee)]
+        public async Task<IActionResult> CheckInBooking([FromBody] CheckInBookingRequestDTO request)
+        {
+            // find payment by id
+            var payment = await _unitOfWork.Payment.GetOneAsync(p => p.Id == request.PaymentId && p.PaymentStatus == Constants.PaymentStatus_Success);
+            if (payment == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Payment not found or not successful.",
+                    StatusCode = 404
+                });
+            }
+            var booking = await _unitOfWork.Booking.GetOneAsync(b => b.Id == payment.BookingId);
+            if (booking == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Booking not found.",
+                    StatusCode = 404
+                });
+            }
+            // check if booking is already checked in
+            if (booking.BookingStatus == Constants.BookingStatus_CheckedIn)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Booking has already been checked in.",
+                    StatusCode = 400
+                });
+            }
+            // update booking status to checked in
+            booking.BookingStatus = Constants.BookingStatus_CheckedIn;
+            booking.LastUpdatedAt = DateTime.Now;
+            // save changes
+            _unitOfWork.Booking.Update(booking);
+            await _unitOfWork.SaveAsync();
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Booking checked in successfully.",
+                Data = new
+                {
+                    PaymentId = payment.Id,
+                    BookingId = booking.Id,
+                }
+            });
         }
     }
 }
