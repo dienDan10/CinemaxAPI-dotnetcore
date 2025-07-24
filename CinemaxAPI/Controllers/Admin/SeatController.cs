@@ -159,8 +159,8 @@ namespace CinemaxAPI.Controllers.Admin
 
             // Find the last row seats
             var lastRowSeats = await _unitOfWork.Seat.GetAllAsync(s => s.ScreenId == screenId
-            && s.SeatRow == ((char)('A' + screen.Rows - 1)).ToString()
-            && s.IsRemoved == false);
+            && s.IsRemoved == false
+            && s.SeatRow == ((char)('A' + screen.Rows - 1)).ToString());
 
             if (lastRowSeats == null || lastRowSeats.ToList().Count == 0)
             {
@@ -303,6 +303,52 @@ namespace CinemaxAPI.Controllers.Admin
             return Ok(new SuccessResponseDTO
             {
                 Message = "Seat enabled successfully."
+            });
+        }
+
+        [HttpPut("{id}/set-vip")]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Admin}")]
+        public async Task<IActionResult> SetVipSeat(int id)
+        {
+            var seat = await _unitOfWork.Seat.GetOneAsync(s => s.Id == id && s.IsRemoved == false);
+            if (seat == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Seat not found."
+                });
+            }
+
+            seat.SeatType = Constants.SeatType_Vip;
+            seat.LastUpdatedAt = DateTime.Now;
+            _unitOfWork.Seat.Update(seat);
+            await _unitOfWork.SaveAsync();
+
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Seat set to VIP successfully."
+            });
+        }
+
+        [HttpPut("{id}/set-normal")]
+        [Authorize(Roles = $"{Constants.Role_Manager},{Constants.Role_Admin}")]
+        public async Task<IActionResult> SetNormalSeat(int id)
+        {
+            var seat = await _unitOfWork.Seat.GetOneAsync(s => s.Id == id && s.IsRemoved == false);
+            if (seat == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Seat not found."
+                });
+            }
+            seat.SeatType = Constants.SeatType_Normal;
+            seat.LastUpdatedAt = DateTime.Now;
+            _unitOfWork.Seat.Update(seat);
+            await _unitOfWork.SaveAsync();
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Seat set to normal successfully."
             });
         }
 

@@ -6,6 +6,7 @@
         public string SeatRow { get; set; }
         public int SeatNumber { get; set; }
         public int ScreenId { get; set; }
+        public string SeatType { get; set; }
         public bool IsActive { get; set; }
     }
 }

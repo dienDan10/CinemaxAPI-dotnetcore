@@ -1,8 +1,6 @@
 ﻿using CinemaxAPI.Models.DTO.Requests;
 using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Repositories;
-using CinemaxAPI.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaxAPI.Controllers.Manager
@@ -19,7 +17,7 @@ namespace CinemaxAPI.Controllers.Manager
         }
 
         [HttpGet]
-        [Authorize(Roles = $"{Constants.Role_Admin},{Constants.Role_Manager}")]
+        //[Authorize(Roles = $"{Constants.Role_Admin},{Constants.Role_Manager}")]
         public async Task<IActionResult> GetRevenueData([FromQuery] GetRevenueRequestDTO request)
         {
             var revenues = await _unitOfWork.Payment.GetRevenueItemsAsync(

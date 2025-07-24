@@ -47,6 +47,8 @@ namespace CinemaxAPI.Repositories.Impl
                         let screen = showTime != null ? showTime.Screen : null
                         let theater = screen != null ? screen.Theater : null
                         let ticketCount = booking != null ? booking.BookingDetails.Count : 0
+                        let bookingDetails = booking != null ? booking.BookingDetails : null
+                        let ticketPrices = bookingDetails != null ? bookingDetails.Sum(bd => bd.TicketPrice) : 0
                         let concessions = p.ConcessionOrder != null ? p.ConcessionOrder.ConcessionOrderDetails.Select(cod => new ConcessionConciseDTO
                         {
 
@@ -62,11 +64,15 @@ namespace CinemaxAPI.Repositories.Impl
                             Payment = new PaymentConciseDTO
                             {
                                 Id = p.Id,
-                                TheaterId = screen != null ? screen.TheaterId : 0,
-                                TheaterName = theater != null ? theater.Name : "Unknown",
                                 PaymentDate = p.PaymentDate,
                                 Amount = p.Amount,
                                 PaymentStatus = p.PaymentStatus
+                            },
+                            Theater = new TheaterConciseDTO
+                            {
+                                Id = theater != null ? theater.Id : 0,
+                                TheaterName = theater != null ? theater.Name : "Unknown",
+                                Amount = p.Amount
                             },
                             ShowTime = new ShowtimeConciseDTO
                             {
@@ -74,14 +80,14 @@ namespace CinemaxAPI.Repositories.Impl
                                 StartTime = showTime != null ? showTime.StartTime : TimeSpan.Zero,
                                 EndTime = showTime != null ? showTime.EndTime : TimeSpan.Zero,
                                 TicketCount = ticketCount,
-                                Amount = showTime != null ? (decimal)(ticketCount * showTime.TicketPrice) : 0
+                                Amount = ticketPrices
                             },
                             Movie = new MovieConciseDTO
                             {
                                 Id = showTime != null ? showTime.Movie.Id : 0,
                                 Title = showTime != null ? showTime.Movie.Title : "Unknown",
                                 TicketCount = ticketCount,
-                                Amount = showTime != null ? (decimal)(ticketCount * showTime.TicketPrice) : 0
+                                Amount = ticketPrices
                             },
                             Concessions = concessions
                         };

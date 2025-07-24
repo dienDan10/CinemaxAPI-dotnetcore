@@ -114,6 +114,7 @@ namespace CinemaxAPI.Controllers.Manager
                         StartTime = startTime,
                         EndTime = endTime,
                         TicketPrice = request.TicketPrice,
+                        VipTicketPrice = request.VipTicketPrice,
                         CreatedAt = DateTime.Now,
                         LastUpdatedAt = DateTime.Now,
                         IsActive = true
@@ -183,6 +184,7 @@ namespace CinemaxAPI.Controllers.Manager
             showTime.StartTime = request.StartTime;
             showTime.EndTime = request.EndTime;
             showTime.TicketPrice = request.TicketPrice;
+            showTime.VipTicketPrice = request.VipTicketPrice;
             showTime.LastUpdatedAt = DateTime.Now;
             _unitOfWork.ShowTime.Update(showTime);
             await _unitOfWork.SaveAsync();

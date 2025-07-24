@@ -26,6 +26,7 @@ namespace CinemaxAPI.Models.DTO.Requests
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public string SeatType { get; set; }
     }
 
     public class BookingRequestConcessionsDTO

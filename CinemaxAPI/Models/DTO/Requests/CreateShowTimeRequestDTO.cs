@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace CinemaxAPI.Models.DTO.Requests
@@ -14,7 +12,9 @@ namespace CinemaxAPI.Models.DTO.Requests
         public List<ShowTimeData> ShowTimes { get; set; }
 
         [Required]
-        public double TicketPrice { get; set; }
+        public decimal TicketPrice { get; set; }
+        [Required]
+        public decimal VipTicketPrice { get; set; }
     }
 
     public class ShowTimeData

@@ -121,6 +121,7 @@ namespace CinemaxAPI.Controllers.Admin
                         SeatRow = rowLetter.ToString(),
                         SeatNumber = c,
                         ScreenId = screenId,
+                        SeatType = Constants.SeatType_Normal,
                         CreatedAt = DateTime.Now,
                         LastUpdatedAt = DateTime.Now
                     });

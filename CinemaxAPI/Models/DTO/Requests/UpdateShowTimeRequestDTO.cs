@@ -9,6 +9,8 @@ namespace CinemaxAPI.Models.DTO.Requests
         [Required]
         public TimeSpan EndTime { get; set; }
         [Required]
-        public double TicketPrice { get; set; }
+        public decimal TicketPrice { get; set; }
+        [Required]
+        public decimal VipTicketPrice { get; set; }
     }
 }

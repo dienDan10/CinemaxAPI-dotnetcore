@@ -20,6 +20,9 @@
         public const string PaymentMethod_VnPay = "VnPay";
         public const string PaymentMethod_Atm = "ATM";
 
+        public const string SeatType_Normal = "Normal";
+        public const string SeatType_Vip = "Vip";
+
         public const int MaxBookingSeats = 5;
     }
 }

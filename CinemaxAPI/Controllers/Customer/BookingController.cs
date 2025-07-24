@@ -90,6 +90,7 @@ namespace CinemaxAPI.Controllers.Customer
                     Id = seat.Id,
                     SeatRow = seat.SeatRow,
                     SeatNumber = seat.SeatNumber,
+                    SeatType = seat.SeatType,
                     IsBooked = isBooked
                 });
             }
@@ -137,14 +138,22 @@ namespace CinemaxAPI.Controllers.Customer
                     StatusCode = 404
                 });
             }
-            var totalAmount = showtime.TicketPrice * bookingRequest.Seats.Count;
+            decimal totalAmount = 0;
+
+            foreach (var seat in bookingRequest.Seats)
+            {
+                if (seat.SeatType == Constants.SeatType_Normal)
+                    totalAmount += showtime.TicketPrice;
+                else if (seat.SeatType == Constants.SeatType_Vip)
+                    totalAmount += showtime.VipTicketPrice;
+            }
 
             // create booking
             var booking = new Booking
             {
                 ShowTimeId = bookingRequest.ShowtimeId,
                 BookingDate = DateTime.Now,
-                TotalAmount = (decimal)totalAmount,
+                TotalAmount = totalAmount,
                 BookingStatus = Constants.BookingStatus_Pending,
                 IsActive = false
             };
@@ -161,7 +170,7 @@ namespace CinemaxAPI.Controllers.Customer
                     BookingId = booking.Id,
                     SeatId = seat.Id,
                     SeatName = seat.Name,
-                    TicketPrice = (decimal)showtime.TicketPrice
+                    TicketPrice = seat.SeatType == Constants.SeatType_Vip ? showtime.VipTicketPrice : showtime.TicketPrice
                 };
 
                 // save booking detail
