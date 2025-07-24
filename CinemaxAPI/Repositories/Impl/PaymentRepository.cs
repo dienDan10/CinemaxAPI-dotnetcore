@@ -42,16 +42,19 @@ namespace CinemaxAPI.Repositories.Impl
                         where p.PaymentDate >= startDate &&
                               p.PaymentDate <= endDate &&
                               p.PaymentStatus == Constants.PaymentStatus_Success
-                        let ticketCount = p.Booking.BookingDetails.Count
-                        let concessions = p.ConcessionOrder != null
-                            ? p.ConcessionOrder.ConcessionOrderDetails.Select(cod => new ConcessionConciseDTO
-                            {
-                                Id = cod.Concession.Id,
-                                Name = cod.Concession.Name,
-                                Quantity = cod.Quantity,
-                                Amount = cod.Concession.Price * cod.Quantity
-                            }).ToList()
-                            : new List<ConcessionConciseDTO>()
+                        let booking = p.Booking
+                        let showTime = booking != null ? booking.ShowTime : null
+                        let screen = showTime != null ? showTime.Screen : null
+                        let theater = screen != null ? screen.Theater : null
+                        let ticketCount = booking != null ? booking.BookingDetails.Count : 0
+                        let concessions = p.ConcessionOrder != null ? p.ConcessionOrder.ConcessionOrderDetails.Select(cod => new ConcessionConciseDTO
+                        {
+
+                            Id = cod.Concession.Id,
+                            Name = cod.Concession.Name,
+                            Quantity = cod.Quantity,
+                            Amount = cod.Concession.Price * cod.Quantity
+                        }).ToList() : new List<ConcessionConciseDTO>()
                         orderby p.PaymentDate ascending
                         select new RevenueItemDTO
                         {
@@ -59,21 +62,30 @@ namespace CinemaxAPI.Repositories.Impl
                             Payment = new PaymentConciseDTO
                             {
                                 Id = p.Id,
-                                TheaterId = p.Booking.ShowTime.Screen.TheaterId,
-                                TheaterName = p.Booking.ShowTime.Screen.Theater.Name,
+                                TheaterId = screen != null ? screen.TheaterId : 0,
+                                TheaterName = theater != null ? theater.Name : "Unknown",
                                 PaymentDate = p.PaymentDate,
                                 Amount = p.Amount,
                                 PaymentStatus = p.PaymentStatus
                             },
+                            ShowTime = new ShowtimeConciseDTO
+                            {
+                                Id = showTime != null ? showTime.Id : 0,
+                                StartTime = showTime != null ? showTime.StartTime : TimeSpan.Zero,
+                                EndTime = showTime != null ? showTime.EndTime : TimeSpan.Zero,
+                                TicketCount = ticketCount,
+                                Amount = showTime != null ? (decimal)(ticketCount * showTime.TicketPrice) : 0
+                            },
                             Movie = new MovieConciseDTO
                             {
-                                Id = p.Booking.ShowTime.Movie.Id,
-                                Title = p.Booking.ShowTime.Movie.Title,
+                                Id = showTime != null ? showTime.Movie.Id : 0,
+                                Title = showTime != null ? showTime.Movie.Title : "Unknown",
                                 TicketCount = ticketCount,
-                                Amount = (decimal)(ticketCount * p.Booking.ShowTime.TicketPrice)
+                                Amount = showTime != null ? (decimal)(ticketCount * showTime.TicketPrice) : 0
                             },
                             Concessions = concessions
                         };
+
 
             return await query.ToListAsync();
         }

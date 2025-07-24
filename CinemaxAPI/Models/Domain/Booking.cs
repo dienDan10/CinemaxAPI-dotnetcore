@@ -18,6 +18,10 @@ namespace CinemaxAPI.Models.Domain
 
         public decimal TotalAmount { get; set; }
         public string? BookingStatus { get; set; }
+        public string? CheckedInBy { get; set; }
+        [ValidateNever]
+        [ForeignKey("CheckedInBy")]
+        public ApplicationUser Employee { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdatedAt { get; set; } = DateTime.Now;

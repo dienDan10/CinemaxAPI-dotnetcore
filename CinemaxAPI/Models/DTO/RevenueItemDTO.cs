@@ -5,6 +5,7 @@
         public DateOnly Date { get; set; }
         public PaymentConciseDTO Payment { get; set; }
         public MovieConciseDTO Movie { get; set; }
+        public ShowtimeConciseDTO ShowTime { get; set; }
         public List<ConcessionConciseDTO> Concessions { get; set; }
     }
 
@@ -16,6 +17,15 @@
         public DateTime PaymentDate { get; set; }
         public decimal Amount { get; set; }
         public string PaymentStatus { get; set; }
+    }
+
+    public class ShowtimeConciseDTO
+    {
+        public int Id { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+        public int TicketCount { get; set; }
+        public decimal Amount { get; set; }
     }
 
     public class MovieConciseDTO

@@ -243,10 +243,16 @@ namespace CinemaxAPI.Controllers.Employee
             }
             // update booking status to checked in
             booking.BookingStatus = Constants.BookingStatus_CheckedIn;
+            booking.CheckedInBy = request.EmployeeId;
             booking.LastUpdatedAt = DateTime.Now;
             // save changes
             _unitOfWork.Booking.Update(booking);
             await _unitOfWork.SaveAsync();
+
+            // send email notification for user
+            await _emailService.SendEmailAsync(payment.Email,
+                "Check in successfull", "<p>Your have checked in successfully</p>");
+
             return Ok(new SuccessResponseDTO
             {
                 Message = "Booking checked in successfully.",
