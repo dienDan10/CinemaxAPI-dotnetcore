@@ -5,6 +5,8 @@ using CinemaxAPI.Models.DTO;
 using CinemaxAPI.Models.DTO.Requests;
 using CinemaxAPI.Models.DTO.Responses;
 using CinemaxAPI.Repositories;
+using CinemaxAPI.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaxAPI.Controllers.Admin
@@ -23,17 +25,32 @@ namespace CinemaxAPI.Controllers.Admin
         }
 
         [HttpGet]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> GetPromotions()
         {
             var promotions = await _unitOfWork.Promotion.GetAllAsync();
             return Ok(new SuccessResponseDTO
             {
-                Data = _mapper.Map<PromotionDTO>(promotions),
+                Data = _mapper.Map<List<PromotionDTO>>(promotions),
+                Message = "Promotions retrieved successfully."
+            });
+        }
+
+        [HttpGet("active")]
+        public async Task<IActionResult> GetCurrentlyActivePromotion()
+        {
+            DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+            var promotions = await _unitOfWork.Promotion.GetAllAsync(p => p.StartDate <= today && p.EndDate >= today && p.IsActive && p.Quantity > p.UsedQuantity);
+
+            return Ok(new SuccessResponseDTO
+            {
+                Data = _mapper.Map<List<PromotionDTO>>(promotions),
                 Message = "Promotions retrieved successfully."
             });
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> GetPromotionById(int id)
         {
             var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == id);
@@ -53,6 +70,7 @@ namespace CinemaxAPI.Controllers.Admin
 
         [HttpPost]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> CreatePromotion([FromBody] CreatePromotionRequestDTO request)
         {
             // check start date and end date
@@ -88,6 +106,7 @@ namespace CinemaxAPI.Controllers.Admin
 
         [HttpPut("{id}")]
         [ValidateModel]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> UpdatePromotion(int id, [FromBody] UpdatePromotionRequestDTO request)
         {
             // check start date and end date
@@ -137,6 +156,7 @@ namespace CinemaxAPI.Controllers.Admin
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> DeletePromotion(int id)
         {
             var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == id);
@@ -166,6 +186,7 @@ namespace CinemaxAPI.Controllers.Admin
         }
 
         [HttpPut("{id}/enable")]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> EnablePromotion(int id)
         {
             var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == id);
@@ -188,6 +209,7 @@ namespace CinemaxAPI.Controllers.Admin
         }
 
         [HttpPut("{id}/disable")]
+        [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> DisablePromotion(int id)
         {
             var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == id);

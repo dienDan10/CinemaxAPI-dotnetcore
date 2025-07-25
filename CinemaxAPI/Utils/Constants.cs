@@ -24,7 +24,7 @@
         public const string SeatType_Vip = "Vip";
 
         public const string PromotionDiscountType_Percentage = "Percentage";
-        public const string PromotionDiscountType_Amount = "Amount";
+        public const string PromotionDiscountType_Amount = "FixedAmount";
 
         public const int MaxBookingSeats = 5;
     }
