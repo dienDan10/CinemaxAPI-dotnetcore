@@ -65,14 +65,14 @@ namespace CinemaxAPI.Repositories.Impl
                             {
                                 Id = p.Id,
                                 PaymentDate = p.PaymentDate,
-                                Amount = p.Amount,
+                                Amount = p.TotalAmount,
                                 PaymentStatus = p.PaymentStatus
                             },
                             Theater = new TheaterConciseDTO
                             {
                                 Id = theater != null ? theater.Id : 0,
                                 TheaterName = theater != null ? theater.Name : "Unknown",
-                                Amount = p.Amount
+                                Amount = p.TotalAmount
                             },
                             ShowTime = new ShowtimeConciseDTO
                             {

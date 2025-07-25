@@ -187,7 +187,7 @@ namespace CinemaxAPI.Controllers.Employee
                 Email = bookingRequest.Email,
                 Name = bookingRequest.Username,
                 PhoneNumber = bookingRequest.Phone,
-                Amount = booking.TotalAmount + (concessionOrder?.TotalPrice ?? 0),
+                TotalAmount = booking.TotalAmount + (concessionOrder?.TotalPrice ?? 0),
                 PaymentMethod = Constants.PaymentMethod_VnPay,
                 PaymentDate = DateTime.Now,
                 PaymentStatus = Constants.PaymentStatus_Success

@@ -246,7 +246,7 @@ namespace CinemaxAPI.Controllers.Customer
                 Email = bookingRequest.Email,
                 Name = bookingRequest.Username,
                 PhoneNumber = bookingRequest.Phone,
-                Amount = booking.TotalAmount + (concessionOrder?.TotalPrice ?? 0),
+                TotalAmount = booking.TotalAmount + (concessionOrder?.TotalPrice ?? 0),
                 PaymentMethod = Constants.PaymentMethod_VnPay,
                 PaymentDate = DateTime.Now,
                 PaymentStatus = Constants.PaymentStatus_Pending
@@ -259,7 +259,7 @@ namespace CinemaxAPI.Controllers.Customer
             // get payment url from VNPayService
             string ipAddress = "127.0.0.1";
             string paymentUrl = _vnPayService.CreatePaymentUrl(
-                amount: payment.Amount,
+                amount: payment.TotalAmount,
                 orderInfo: $"Movie Ticket Booking #{payment.Id}",
                 ipAddress: ipAddress,
                 returnUrl: $"{_vnPaySettings.ReturnUrl}?paymentId={payment.Id}",

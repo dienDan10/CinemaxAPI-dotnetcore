@@ -18,7 +18,7 @@ namespace CinemaxAPI.Repositories.Impl
         public IConcessionOrderDetailRepository ConcessionOrderDetail { get; private set; }
         public IPaymentRepository Payment { get; private set; }
         public IApplicationUserRepository ApplicationUser { get; private set; }
-
+        public IPromotionRepository Promotion { get; private set; }
 
         public UnitOfWork(CinemaxServerDbContext db)
         {
@@ -36,6 +36,7 @@ namespace CinemaxAPI.Repositories.Impl
             ConcessionOrderDetail = new ConcessionOrderDetailRepository(_db);
             Payment = new PaymentRepository(_db);
             ApplicationUser = new ApplicationUserRepository(_db);
+            Promotion = new PromotionRepository(_db);
         }
 
         public async Task SaveAsync()

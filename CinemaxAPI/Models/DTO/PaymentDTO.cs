@@ -8,7 +8,10 @@
         public string? Email { get; set; }
         public string? Name { get; set; }
         public string? PhoneNumber { get; set; }
-        public decimal Amount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal? DiscountAmount { get; set; }
+        public decimal FinalAmount { get; set; }
+        public decimal? BonusPointsUsed { get; set; }
         public string? PaymentMethod { get; set; }
         public DateTime PaymentDate { get; set; }
         public string? PaymentStatus { get; set; }
