@@ -55,6 +55,9 @@ namespace CinemaxAPI.Mappings
 
             // booking mappings
             CreateMap<Booking, BookingDTO>();
+
+            // promotion mappings
+            CreateMap<Promotion, PromotionDTO>();
         }
     }
 
