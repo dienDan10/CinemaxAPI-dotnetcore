@@ -447,8 +447,9 @@ namespace CinemaxAPI.Controllers.Customer
 
         [HttpGet("history")]
         [Authorize(Roles = $"{Constants.Role_Customer}")]
-        public async Task<IActionResult> GetBookings()
+        public async Task<IActionResult> GetBookings([FromQuery] BookingHistoryFilterRequest request)
         {
+
             // get user id from claims
             if (!User.Identity.IsAuthenticated)
             {
@@ -461,8 +462,10 @@ namespace CinemaxAPI.Controllers.Customer
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get all payments by user id, only success status
+            var startDate = request.FromDate ?? DateTime.Now;
+            var endDate = request.ToDate ?? DateTime.Now.AddDays(30);
             var payments = (await _unitOfWork.Payment.GetAllAsync(
-                p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Success,
+                p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Success && p.PaymentDate >= startDate && p.PaymentDate.Date <= endDate.Date,
                 includeProperties: "Booking,ConcessionOrder"))?.ToList();
             if (payments == null || !payments.Any())
             {
