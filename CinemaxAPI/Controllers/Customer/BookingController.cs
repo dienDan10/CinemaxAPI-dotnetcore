@@ -90,6 +90,7 @@ namespace CinemaxAPI.Controllers.Customer
                     Id = seat.Id,
                     SeatRow = seat.SeatRow,
                     SeatNumber = seat.SeatNumber,
+                    SeatType = seat.SeatType,
                     IsBooked = isBooked
                 });
             }
@@ -127,6 +128,29 @@ namespace CinemaxAPI.Controllers.Customer
                 }
             }
 
+            // check if user has enough points to use
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (bookingRequest.PointsUsed > 0)
+            {
+                var user = await _unitOfWork.ApplicationUser.GetOneAsync(u => u.Id == userId);
+                if (user == null)
+                {
+                    return NotFound(new ErrorResponseDTO
+                    {
+                        Message = "User not found.",
+                        StatusCode = 404
+                    });
+                }
+                if (user.Point < bookingRequest.PointsUsed)
+                {
+                    return BadRequest(new ErrorResponseDTO
+                    {
+                        Message = "You do not have enough points to use.",
+                        StatusCode = 400
+                    });
+                }
+            }
+
             // calculate total amount of booking
             var showtime = await _unitOfWork.ShowTime.GetOneAsync(st => st.Id == bookingRequest.ShowtimeId);
             if (showtime == null)
@@ -137,14 +161,22 @@ namespace CinemaxAPI.Controllers.Customer
                     StatusCode = 404
                 });
             }
-            var totalAmount = showtime.TicketPrice * bookingRequest.Seats.Count;
+            decimal totalAmount = 0;
+
+            foreach (var seat in bookingRequest.Seats)
+            {
+                if (seat.SeatType == Constants.SeatType_Normal)
+                    totalAmount += showtime.TicketPrice;
+                else if (seat.SeatType == Constants.SeatType_Vip)
+                    totalAmount += showtime.VipTicketPrice;
+            }
 
             // create booking
             var booking = new Booking
             {
                 ShowTimeId = bookingRequest.ShowtimeId,
                 BookingDate = DateTime.Now,
-                TotalAmount = (decimal)totalAmount,
+                TotalAmount = totalAmount,
                 BookingStatus = Constants.BookingStatus_Pending,
                 IsActive = false
             };
@@ -161,7 +193,7 @@ namespace CinemaxAPI.Controllers.Customer
                     BookingId = booking.Id,
                     SeatId = seat.Id,
                     SeatName = seat.Name,
-                    TicketPrice = (decimal)showtime.TicketPrice
+                    TicketPrice = seat.SeatType == Constants.SeatType_Vip ? showtime.VipTicketPrice : showtime.TicketPrice
                 };
 
                 // save booking detail
@@ -201,6 +233,8 @@ namespace CinemaxAPI.Controllers.Customer
                 await _unitOfWork.ConcessionOrder.AddAsync(concessionOrder);
                 await _unitOfWork.SaveAsync();
 
+                totalAmount += totalConcessionPrice;
+
                 // create concession order details
                 foreach (var concession in bookingRequest.Concessions)
                 {
@@ -228,6 +262,36 @@ namespace CinemaxAPI.Controllers.Customer
                 }
             }
 
+            // increase promotion usage count if applicable
+            if (bookingRequest.PromotionId > 0)
+            {
+                var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == bookingRequest.PromotionId && p.IsActive);
+                if (promotion == null)
+                {
+                    return NotFound(new ErrorResponseDTO
+                    {
+                        Message = "Promotion not found.",
+                        StatusCode = 404
+                    });
+                }
+                // check if promotion is valid for this booking
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                if (promotion.StartDate <= today && promotion.EndDate >= today)
+                {
+                    promotion.UsedQuantity++;
+                    _unitOfWork.Promotion.Update(promotion);
+                    await _unitOfWork.SaveAsync();
+                }
+                else
+                {
+                    return BadRequest(new ErrorResponseDTO
+                    {
+                        Message = "Promotion is not valid for this booking.",
+                        StatusCode = 400
+                    });
+                }
+            }
+
             // create payment
             var payment = new Payment
             {
@@ -237,7 +301,11 @@ namespace CinemaxAPI.Controllers.Customer
                 Email = bookingRequest.Email,
                 Name = bookingRequest.Username,
                 PhoneNumber = bookingRequest.Phone,
-                Amount = booking.TotalAmount + (concessionOrder?.TotalPrice ?? 0),
+                TotalAmount = bookingRequest.TotalAmount,
+                DiscountAmount = bookingRequest.DiscountAmount,
+                FinalAmount = bookingRequest.FinalAmount,
+                PromotionId = bookingRequest.PromotionId > 0 ? bookingRequest.PromotionId : null,
+                BonusPointsUsed = bookingRequest.PointsUsed > 0 ? bookingRequest.PointsUsed : null,
                 PaymentMethod = Constants.PaymentMethod_VnPay,
                 PaymentDate = DateTime.Now,
                 PaymentStatus = Constants.PaymentStatus_Pending
@@ -250,7 +318,7 @@ namespace CinemaxAPI.Controllers.Customer
             // get payment url from VNPayService
             string ipAddress = "127.0.0.1";
             string paymentUrl = _vnPayService.CreatePaymentUrl(
-                amount: payment.Amount,
+                amount: payment.FinalAmount,
                 orderInfo: $"Movie Ticket Booking #{payment.Id}",
                 ipAddress: ipAddress,
                 returnUrl: $"{_vnPaySettings.ReturnUrl}?paymentId={payment.Id}",
@@ -280,6 +348,18 @@ namespace CinemaxAPI.Controllers.Customer
         {
             var payment = await _unitOfWork.Payment.GetOneAsync(p => p.Id == request.PaymentId, "Booking");
             if (payment == null) return NotFound("Payment not found");
+
+            if (payment.PaymentStatus == Constants.PaymentStatus_Success)
+            {
+                return Ok(new SuccessResponseDTO
+                {
+                    Message = "Payment verified successfully.",
+                    Data = new
+                    {
+                        PaymentId = payment.Id,
+                    }
+                });
+            }
 
             var vnpParams = new SortedDictionary<string, string>(request.VnpParams);
             if (!vnpParams.TryGetValue("vnp_SecureHash", out var secureHash))
@@ -312,13 +392,22 @@ namespace CinemaxAPI.Controllers.Customer
 
                 if (payment.BookingId != null)
                 {
-                    var booking = await _unitOfWork.Booking.GetOneAsync(b => b.Id == payment.BookingId.Value);
+                    var booking = await _unitOfWork.Booking.GetOneAsync(b => b.Id == payment.BookingId.Value, includeProperties: "BookingDetails");
                     if (booking != null)
                     {
                         booking.BookingStatus = Constants.BookingStatus_Success;
                         booking.IsActive = true;
                         _unitOfWork.Booking.Update(booking);
+                        // add points for user base on booked seats
+                        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        var user = await _unitOfWork.ApplicationUser.GetOneAsync(u => u.Id == userId);
+                        if (user != null)
+                        {
+                            user.Point += booking.BookingDetails.Count * Constants.BonusPointsPerSeat;
+                            user.Point -= payment.BonusPointsUsed != null ? payment.BonusPointsUsed.Value : 0;
+                        }
                     }
+
                 }
 
                 if (payment.ConcessionOrderId != null)
@@ -372,7 +461,7 @@ namespace CinemaxAPI.Controllers.Customer
         }
 
         [HttpGet("payment/{id}")]
-        //[Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
+        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
         public async Task<IActionResult> GetBookingDetails(int id)
         {
             // get the payment
@@ -427,11 +516,15 @@ namespace CinemaxAPI.Controllers.Customer
                 });
             }
 
+            // get the promotion data
+            var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == payment.PromotionId);
+
             return Ok(new SuccessResponseDTO
             {
                 Data = new
                 {
                     Payment = _mapper.Map<PaymentDTO>(payment),
+                    Promotion = _mapper.Map<PromotionDTO>(promotion),
                     Booking = _mapper.Map<BookingDTO>(payment.Booking),
                     ShowTime = _mapper.Map<ShowTimeDTO>(showtime),
                     Movie = _mapper.Map<MovieDTO>(showtime.Movie),
@@ -450,15 +543,6 @@ namespace CinemaxAPI.Controllers.Customer
         public async Task<IActionResult> GetBookings([FromQuery] BookingHistoryFilterRequest request)
         {
 
-            // get user id from claims
-            if (!User.Identity.IsAuthenticated)
-            {
-                return Unauthorized(new ErrorResponseDTO
-                {
-                    Message = "You must be logged in to view your bookings.",
-                    StatusCode = 401
-                });
-            }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get all payments by user id, only success status
@@ -467,7 +551,7 @@ namespace CinemaxAPI.Controllers.Customer
             var payments = (await _unitOfWork.Payment.GetAllAsync(
                 p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Success && p.PaymentDate >= startDate && p.PaymentDate.Date <= endDate.Date,
                 includeProperties: "Booking,ConcessionOrder"))?.ToList();
-            if (payments == null || !payments.Any())
+            if (payments == null || payments.Count == 0)
             {
                 return NotFound(new ErrorResponseDTO
                 {
@@ -486,11 +570,11 @@ namespace CinemaxAPI.Controllers.Customer
                 result.Add(new
                 {
                     PaymentId = payment.Id,
-                    PaymentStatus = payment.PaymentStatus,
-                    PaymentDate = payment.PaymentDate,
+                    payment.PaymentStatus,
+                    payment.PaymentDate,
                     MovieName = booking.ShowTime.Movie.Title,
                     ShowDate = booking.ShowTime.Date,
-                    TotalAmount = payment.Amount
+                    TotalAmount = payment.FinalAmount
                 });
             }
 

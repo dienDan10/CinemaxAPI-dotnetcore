@@ -14,6 +14,8 @@ namespace CinemaxAPI.Repositories
             SortRequestDTO? sort = null,
             PagedRequestDTO? paged = null);
 
+        Task<ApplicationUser?> FindCustomerByEmailAsync(string email);
+
 
     }
 }

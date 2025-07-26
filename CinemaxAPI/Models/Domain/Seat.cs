@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+﻿using CinemaxAPI.Utils;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,6 +17,7 @@ namespace CinemaxAPI.Models.Domain
         [ValidateNever]
         [ForeignKey("ScreenId")]
         public Screen Screen { get; set; }
+        public string SeatType { get; set; } = Constants.SeatType_Normal;
         public bool IsActive { get; set; } = true;
         public bool IsRemoved { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.Now;

@@ -1,5 +1,3 @@
-using System;
-
 namespace CinemaxAPI.Models.DTO
 {
     public class ShowTimeDTO
@@ -10,7 +8,8 @@ namespace CinemaxAPI.Models.DTO
         public DateTime Date { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public double TicketPrice { get; set; }
+        public decimal TicketPrice { get; set; }
+        public decimal VipTicketPrice { get; set; }
         public bool IsActive { get; set; }
     }
 }

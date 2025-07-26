@@ -19,7 +19,8 @@ namespace CinemaxAPI.Models.Domain
         public DateTime Date { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public double TicketPrice { get; set; }
+        public decimal TicketPrice { get; set; }
+        public decimal VipTicketPrice { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdatedAt { get; set; } = DateTime.Now;

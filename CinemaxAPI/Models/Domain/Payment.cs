@@ -36,10 +36,15 @@ namespace CinemaxAPI.Models.Domain
         [Required]
         public string? PhoneNumber { get; set; }
 
-        public decimal Amount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal? DiscountAmount { get; set; }
+        public decimal FinalAmount { get; set; }
+        public int? PromotionId { get; set; }
+        [ForeignKey("PromotionId")]
+        public Promotion? Promotion { get; set; }
+        public int? BonusPointsUsed { get; set; }
         public string? PaymentMethod { get; set; }
         public DateTime PaymentDate { get; set; }
-        public string? PaymentIntentId { get; set; }
         public string? PaymentStatus { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdatedAt { get; set; } = DateTime.Now;
