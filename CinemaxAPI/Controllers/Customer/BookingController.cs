@@ -442,6 +442,15 @@ namespace CinemaxAPI.Controllers.Customer
             }
 
             // If payment verification fails
+            if (payment.BookingId != null)
+            {
+                var booking = await _unitOfWork.Booking.GetOneAsync(b => b.Id == payment.BookingId.Value);
+                if (booking != null)
+                {
+                    booking.BookingStatus = Constants.BookingStatus_Failed;
+                    _unitOfWork.Booking.Update(booking);
+                }
+            }
             _unitOfWork.Payment.UpdateStatus(payment.Id, Constants.PaymentStatus_Failed);
             await _unitOfWork.SaveAsync();
             return BadRequest(new ErrorResponseDTO
@@ -529,6 +538,60 @@ namespace CinemaxAPI.Controllers.Customer
 
         }
 
+        [HttpGet("history")]
+        [Authorize(Roles = $"{Constants.Role_Customer}")]
+        public async Task<IActionResult> GetBookings([FromQuery] BookingHistoryFilterRequest request)
+        {
 
+            // get user id from claims
+            if (!User.Identity.IsAuthenticated)
+            {
+                return Unauthorized(new ErrorResponseDTO
+                {
+                    Message = "You must be logged in to view your bookings.",
+                    StatusCode = 401
+                });
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // get all payments by user id, only success status
+            var startDate = request.FromDate ?? DateTime.Now;
+            var endDate = request.ToDate ?? DateTime.Now.AddDays(30);
+            var payments = (await _unitOfWork.Payment.GetAllAsync(
+                p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Success && p.PaymentDate >= startDate && p.PaymentDate.Date <= endDate.Date,
+                includeProperties: "Booking,ConcessionOrder"))?.ToList();
+            if (payments == null || !payments.Any())
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "No successful bookings found for this user.",
+                    StatusCode = 404
+                });
+            }
+
+            var result = new List<object>();
+            foreach (var payment in payments)
+            {
+                var booking = await _unitOfWork.Booking.GetOneAsync(b => b.Id == payment.BookingId, includeProperties: "ShowTime,ShowTime.Movie");
+                if (booking == null || booking.ShowTime == null || booking.ShowTime.Movie == null)
+                    continue;
+
+                result.Add(new
+                {
+                    PaymentId = payment.Id,
+                    PaymentStatus = payment.PaymentStatus,
+                    PaymentDate = payment.PaymentDate,
+                    MovieName = booking.ShowTime.Movie.Title,
+                    ShowDate = booking.ShowTime.Date,
+                    TotalAmount = payment.Amount
+                });
+            }
+
+            return Ok(new SuccessResponseDTO
+            {
+                Data = result,
+                Message = "Successful bookings retrieved successfully."
+            });
+        }
     }
 }
