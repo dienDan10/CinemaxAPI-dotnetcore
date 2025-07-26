@@ -10,10 +10,12 @@
         public const string PaymentStatus_Pending = "Pending";
         public const string PaymentStatus_Success = "Success";
         public const string PaymentStatus_Failed = "Failed";
+        public const string PaymentStatus_Cancelled = "Cancelled";
 
         public const string BookingStatus_Pending = "Pending";
         public const string BookingStatus_Success = "Success";
         public const string BookingStatus_Failed = "Failed";
+        public const string BookingStatus_Cancelled = "Cancelled";
         public const string BookingStatus_CheckedIn = "Checked In";
 
 
@@ -29,5 +31,11 @@
         public const int MaxBookingSeats = 5;
 
         public const int BonusPointsPerSeat = 100;
+
+        public const int MinCancelHoursBeforeShowtime = 2;
+        public const int BookingTimeoutMinutes = 5;
+        public const int MaxCancelledBookingsPerMonth = 3;
+        public const int DaysToTrackCancelledBookings = 30;
+        public const int CancelledPaymentAmountConvertedPercentage = 80;
     }
 }

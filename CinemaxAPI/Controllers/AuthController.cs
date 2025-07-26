@@ -190,6 +190,7 @@ namespace CinemaxAPI.Controllers
                 DisplayName = user.DisplayName,
                 TheaterId = user.TheaterId,
                 Role = roles.FirstOrDefault() ?? Constants.Role_Customer,
+                Point = user.Point
             };
 
 

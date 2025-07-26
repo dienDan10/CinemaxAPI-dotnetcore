@@ -549,7 +549,7 @@ namespace CinemaxAPI.Controllers.Customer
             var startDate = request.FromDate ?? DateTime.Now;
             var endDate = request.ToDate ?? DateTime.Now.AddDays(30);
             var payments = (await _unitOfWork.Payment.GetAllAsync(
-                p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Success && p.PaymentDate >= startDate && p.PaymentDate.Date <= endDate.Date,
+                p => p.UserId == userId && p.PaymentDate >= startDate && p.PaymentDate.Date <= endDate.Date,
                 includeProperties: "Booking,ConcessionOrder"))?.ToList();
             if (payments == null || payments.Count == 0)
             {
@@ -582,6 +582,111 @@ namespace CinemaxAPI.Controllers.Customer
             {
                 Data = result,
                 Message = "Successful bookings retrieved successfully."
+            });
+        }
+
+        [HttpPut("payment/{paymentId}/cancel")]
+        public async Task<IActionResult> CancelBooking(int paymentId)
+        {
+            var payment = await _unitOfWork.Payment.GetOneAsync(p => p.Id == paymentId);
+            if (payment == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Payment not found.",
+                    StatusCode = 404
+                });
+            }
+
+            // don't allow cancel if payment is not successful
+            if (payment.PaymentStatus != Constants.PaymentStatus_Success)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Only successful payments can be cancelled.",
+                    StatusCode = 400
+                });
+            }
+
+            // check if ticket has been checked in
+            var booking = await _unitOfWork.Booking.GetOneAsync(b => b.Id == payment.BookingId);
+            if (booking == null || booking.BookingStatus == Constants.BookingStatus_CheckedIn)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = "Ticket has already been checked in and cannot be cancelled.",
+                    StatusCode = 400
+                });
+            }
+
+            // don't allow cancel if user has cancelled 3 payments in the last 30 days
+            var userId = payment.UserId;
+            var recentCancelledPayments = await _unitOfWork.Payment.GetAllAsync(
+                p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Cancelled &&
+                     p.PaymentDate >= DateTime.Now.AddDays(-Constants.DaysToTrackCancelledBookings));
+
+            if (recentCancelledPayments != null && recentCancelledPayments.Count() >= Constants.MaxCancelledBookingsPerMonth)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = $"You have reached the limit of {Constants.MaxCancelledBookingsPerMonth} cancellations in the last {Constants.DaysToTrackCancelledBookings} days.",
+                    StatusCode = 400
+                });
+            }
+
+            // don't allow cancel if the showtime is about to start in less than 2 hour
+            var showtime = await _unitOfWork.ShowTime.GetOneAsync(st => st.Id == booking.ShowTimeId);
+            if (showtime == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "Showtime not found.",
+                    StatusCode = 404
+                });
+            }
+            var currentDateTime = DateTime.Now;
+            var showtimeDateTime = showtime.Date.Add(showtime.StartTime).AddHours(-Constants.MinCancelHoursBeforeShowtime);
+            if (currentDateTime > showtimeDateTime)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = $"You cannot cancel a booking less than {Constants.MinCancelHoursBeforeShowtime} hours before the showtime.",
+                    StatusCode = 400
+                });
+            }
+
+            // update booking status to cancelled
+            booking.BookingStatus = Constants.BookingStatus_Cancelled;
+            booking.IsActive = false;
+
+            // update concession order status to cancelled if exists
+            if (payment.ConcessionOrderId.HasValue)
+            {
+                var concessionOrder = await _unitOfWork.ConcessionOrder.GetOneAsync(co => co.Id == payment.ConcessionOrderId.Value);
+                if (concessionOrder != null)
+                {
+                    concessionOrder.IsActive = false;
+                    _unitOfWork.ConcessionOrder.Update(concessionOrder);
+                }
+            }
+
+            // convert payment amount to bonus points if applicable
+            var bonusPoints = (int)(payment.FinalAmount * Constants.CancelledPaymentAmountConvertedPercentage / 1000);
+            var user = await _unitOfWork.ApplicationUser.GetOneAsync(u => u.Id == userId);
+            if (user != null)
+            {
+                user.Point += bonusPoints;
+                _unitOfWork.ApplicationUser.Update(user);
+            }
+
+            // update payment status to cancelled
+            payment.PaymentStatus = Constants.PaymentStatus_Cancelled;
+            _unitOfWork.Payment.Update(payment);
+            await _unitOfWork.SaveAsync();
+
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "Booking canceled successfully."
             });
         }
     }
