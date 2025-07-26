@@ -461,7 +461,7 @@ namespace CinemaxAPI.Controllers.Customer
         }
 
         [HttpGet("payment/{id}")]
-        //[Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
+        [Authorize(Roles = $"{Constants.Role_Customer},{Constants.Role_Employee}")]
         public async Task<IActionResult> GetBookingDetails(int id)
         {
             // get the payment
@@ -543,15 +543,6 @@ namespace CinemaxAPI.Controllers.Customer
         public async Task<IActionResult> GetBookings([FromQuery] BookingHistoryFilterRequest request)
         {
 
-            // get user id from claims
-            if (!User.Identity.IsAuthenticated)
-            {
-                return Unauthorized(new ErrorResponseDTO
-                {
-                    Message = "You must be logged in to view your bookings.",
-                    StatusCode = 401
-                });
-            }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get all payments by user id, only success status
@@ -560,7 +551,7 @@ namespace CinemaxAPI.Controllers.Customer
             var payments = (await _unitOfWork.Payment.GetAllAsync(
                 p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatus_Success && p.PaymentDate >= startDate && p.PaymentDate.Date <= endDate.Date,
                 includeProperties: "Booking,ConcessionOrder"))?.ToList();
-            if (payments == null || !payments.Any())
+            if (payments == null || payments.Count == 0)
             {
                 return NotFound(new ErrorResponseDTO
                 {
@@ -579,11 +570,11 @@ namespace CinemaxAPI.Controllers.Customer
                 result.Add(new
                 {
                     PaymentId = payment.Id,
-                    PaymentStatus = payment.PaymentStatus,
-                    PaymentDate = payment.PaymentDate,
+                    payment.PaymentStatus,
+                    payment.PaymentDate,
                     MovieName = booking.ShowTime.Movie.Title,
                     ShowDate = booking.ShowTime.Date,
-                    TotalAmount = payment.Amount
+                    TotalAmount = payment.FinalAmount
                 });
             }
 
