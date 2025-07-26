@@ -11,6 +11,7 @@
         public decimal TotalAmount { get; set; }
         public decimal? DiscountAmount { get; set; }
         public decimal FinalAmount { get; set; }
+        public int PromotionId { get; set; }
         public decimal? BonusPointsUsed { get; set; }
         public string? PaymentMethod { get; set; }
         public DateTime PaymentDate { get; set; }

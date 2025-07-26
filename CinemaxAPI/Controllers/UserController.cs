@@ -49,6 +49,7 @@ namespace CinemaxAPI.Controllers
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+
             var userProfile = new UserProfileDTO
             {
                 Id = user.Id,
@@ -56,6 +57,7 @@ namespace CinemaxAPI.Controllers
                 DisplayName = user.DisplayName,
                 TheaterId = user.TheaterId,
                 Role = roles.FirstOrDefault() ?? Constants.Role_Customer,
+                Point = user.Point
             };
 
             return Ok(new SuccessResponseDTO
@@ -66,6 +68,53 @@ namespace CinemaxAPI.Controllers
                 Data = userProfile
             });
 
+        }
+
+        [HttpGet("profile/{email}")]
+        public async Task<IActionResult> GetUserByEamil(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "User not found",
+                    StatusCode = 404,
+                    Status = "Error"
+                });
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? Constants.Role_Customer;
+
+            if (role != Constants.Role_Customer)
+            {
+                return NotFound(new ErrorResponseDTO
+                {
+                    Message = "User not found",
+                    StatusCode = 404,
+                    Status = "Error"
+                });
+            }
+            var userProfile = new UserProfileDTO
+            {
+                Id = user.Id,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                TheaterId = user.TheaterId,
+                Role = roles.FirstOrDefault() ?? Constants.Role_Customer,
+                Point = user.Point
+            };
+
+
+            return Ok(new SuccessResponseDTO
+            {
+                Message = "",
+                Status = "Success",
+                StatusCode = 200,
+                Data = userProfile
+            });
         }
     }
 }

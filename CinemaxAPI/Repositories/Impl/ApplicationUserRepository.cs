@@ -12,6 +12,17 @@ namespace CinemaxAPI.Repositories.Impl
         {
         }
 
+        public async Task<ApplicationUser?> FindCustomerByEmailAsync(string email)
+        {
+            var query = from applicationUser in _context.ApplicationUsers
+                        join userRole in _context.UserRoles on applicationUser.Id equals userRole.UserId
+                        join role in _context.Roles on userRole.RoleId equals role.Id
+                        where applicationUser.Email == email && role.Name == Constants.Role_Customer
+                        select applicationUser;
+
+            return await query.FirstOrDefaultAsync();
+        }
+
         public async Task<(IEnumerable<ApplicationUser> customers, int totalCount)> GetAllCustomerAsync(CustomerFilterRequestDTO? filter = null, SortRequestDTO? sort = null, PagedRequestDTO? paged = null)
         {
             // only get user with customer role

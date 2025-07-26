@@ -7,5 +7,6 @@
         public string DisplayName { get; set; }
         public int? TheaterId { get; set; }
         public string Role { get; set; }
+        public int Point { get; set; }
     }
 }

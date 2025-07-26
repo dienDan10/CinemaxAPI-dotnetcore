@@ -27,5 +27,7 @@
         public const string PromotionDiscountType_Amount = "FixedAmount";
 
         public const int MaxBookingSeats = 5;
+
+        public const int BonusPointsPerSeat = 100;
     }
 }

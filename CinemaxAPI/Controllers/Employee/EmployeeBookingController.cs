@@ -54,6 +54,16 @@ namespace CinemaxAPI.Controllers.Employee
         [Authorize(Roles = Constants.Role_Employee)]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequestDTO bookingRequest)
         {
+            // check if the seats count exceeds the limit
+            if (bookingRequest.Seats.Count > Constants.MaxBookingSeats)
+            {
+                return BadRequest(new ErrorResponseDTO
+                {
+                    Message = $"You can only book up to {Constants.MaxBookingSeats} seats at a time.",
+                    StatusCode = 400
+                });
+            }
+
             // check if seats have been booked
             var bookedSeats = await _unitOfWork.Seat.GetBookedSeatsByShowtimeId(bookingRequest.ShowtimeId);
             foreach (var seat in bookingRequest.Seats)
@@ -66,6 +76,33 @@ namespace CinemaxAPI.Controllers.Employee
                         StatusCode = 400
                     });
                 }
+            }
+
+            // check if user has enough points to use
+            if (!string.IsNullOrEmpty(bookingRequest.UserId) && bookingRequest.PointsUsed > 0)
+            {
+                var user = await _unitOfWork.ApplicationUser.GetOneAsync(u => u.Id == bookingRequest.UserId);
+                if (user == null)
+                {
+                    return NotFound(new ErrorResponseDTO
+                    {
+                        Message = "User not found.",
+                        StatusCode = 404
+                    });
+                }
+                if (user.Point < bookingRequest.PointsUsed)
+                {
+                    return BadRequest(new ErrorResponseDTO
+                    {
+                        Message = "You do not have enough points to use.",
+                        StatusCode = 400
+                    });
+                }
+
+                // deduct points from user
+                user.Point -= bookingRequest.PointsUsed;
+                _unitOfWork.ApplicationUser.Update(user);
+                await _unitOfWork.SaveAsync();
             }
 
             // calculate total amount of booking
@@ -151,6 +188,8 @@ namespace CinemaxAPI.Controllers.Employee
                 await _unitOfWork.ConcessionOrder.AddAsync(concessionOrder);
                 await _unitOfWork.SaveAsync();
 
+                totalAmount += totalConcessionPrice;
+
                 // create concession order details
                 foreach (var concession in bookingRequest.Concessions)
                 {
@@ -178,16 +217,62 @@ namespace CinemaxAPI.Controllers.Employee
                 }
             }
 
+            // add bonus points for booking
+            if (!string.IsNullOrEmpty(bookingRequest.UserId))
+            {
+                var user = await _unitOfWork.ApplicationUser.GetOneAsync(u => u.Id == bookingRequest.UserId);
+                if (user != null)
+                {
+                    user.Point += (Constants.BonusPointsPerSeat * bookingRequest.Seats.Count);
+                    _unitOfWork.ApplicationUser.Update(user);
+                }
+            }
+
+            // increase promotion usage count if applicable
+            if (bookingRequest.PromotionId > 0)
+            {
+                var promotion = await _unitOfWork.Promotion.GetOneAsync(p => p.Id == bookingRequest.PromotionId && p.IsActive);
+                if (promotion == null)
+                {
+                    return NotFound(new ErrorResponseDTO
+                    {
+                        Message = "Promotion not found.",
+                        StatusCode = 404
+                    });
+                }
+                // check if promotion is valid for this booking
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                if (promotion.StartDate <= today && promotion.EndDate >= today)
+                {
+                    promotion.UsedQuantity++;
+                    _unitOfWork.Promotion.Update(promotion);
+                    await _unitOfWork.SaveAsync();
+                }
+                else
+                {
+                    return BadRequest(new ErrorResponseDTO
+                    {
+                        Message = "Promotion is not valid for this booking.",
+                        StatusCode = 400
+                    });
+                }
+            }
+
             // create payment
             var payment = new Payment
             {
-                EmployeeId = bookingRequest.UserId,
+                UserId = string.IsNullOrEmpty(bookingRequest.UserId) ? null : bookingRequest.UserId,
+                EmployeeId = bookingRequest.EmployeeId,
                 BookingId = booking.Id,
                 ConcessionOrderId = concessionOrder?.Id,
                 Email = bookingRequest.Email,
                 Name = bookingRequest.Username,
                 PhoneNumber = bookingRequest.Phone,
-                TotalAmount = booking.TotalAmount + (concessionOrder?.TotalPrice ?? 0),
+                TotalAmount = bookingRequest.TotalAmount,
+                DiscountAmount = bookingRequest.DiscountAmount,
+                FinalAmount = bookingRequest.FinalAmount,
+                PromotionId = bookingRequest.PromotionId > 0 ? bookingRequest.PromotionId : null,
+                BonusPointsUsed = bookingRequest.PointsUsed > 0 ? bookingRequest.PointsUsed : null,
                 PaymentMethod = Constants.PaymentMethod_VnPay,
                 PaymentDate = DateTime.Now,
                 PaymentStatus = Constants.PaymentStatus_Success

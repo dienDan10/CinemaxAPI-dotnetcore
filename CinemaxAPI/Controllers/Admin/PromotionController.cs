@@ -168,7 +168,7 @@ namespace CinemaxAPI.Controllers.Admin
                 });
             }
             // don't allow delete if promotion is already used
-            if (promotion.UsedQuantity >= 0)
+            if (promotion.UsedQuantity > 0)
             {
                 return BadRequest(new ErrorResponseDTO
                 {
